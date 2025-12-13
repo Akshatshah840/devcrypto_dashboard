@@ -1,11 +1,16 @@
-import { 
-  GitHubActivity, 
-  AirQualityData, 
-  CorrelationResult, 
+import {
+  GitHubActivity,
+  AirQualityData,
+  CorrelationResult,
   TimePeriod,
   ExportFormat
 } from '../types';
-import { isSupportedCity } from '../data/cities';
+import { CRYPTO_COINS } from '../data/coins';
+
+// Helper to check if a coin ID is supported
+const isSupportedCoin = (coinId: string): boolean => {
+  return CRYPTO_COINS.some(coin => coin.id === coinId);
+};
 
 /**
  * Validation result interface
@@ -157,18 +162,18 @@ export function validateCorrelationResult(data: any): ValidationResult<Correlati
 /**
  * Validates request parameters for frontend use
  */
-export function validateCityParam(city: string): ValidationResult<string> {
+export function validateCoinParam(coinId: string): ValidationResult<string> {
   const errors: string[] = [];
 
-  if (typeof city !== 'string' || city.trim().length === 0) {
-    errors.push('City parameter must be a non-empty string');
-  } else if (!isSupportedCity(city)) {
-    errors.push(`City '${city}' is not supported`);
+  if (typeof coinId !== 'string' || coinId.trim().length === 0) {
+    errors.push('Coin ID parameter must be a non-empty string');
+  } else if (!isSupportedCoin(coinId)) {
+    errors.push(`Coin '${coinId}' is not supported`);
   }
 
   return {
     isValid: errors.length === 0,
-    data: errors.length === 0 ? city : undefined,
+    data: errors.length === 0 ? coinId : undefined,
     errors
   };
 }
