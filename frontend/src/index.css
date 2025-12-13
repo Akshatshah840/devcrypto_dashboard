@@ -1,0 +1,322 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Base styles */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    cursor: none;
+  }
+
+  /* Hide default cursor on all elements */
+  *, *::before, *::after {
+    cursor: none !important;
+  }
+
+  /* Better focus styles */
+  *:focus-visible {
+    @apply outline-none ring-2 ring-primary/50 ring-offset-2 ring-offset-base-100;
+  }
+}
+
+/* Custom Cursor Styles - Dot and Ring */
+.cursor-dot {
+  width: 10px;
+  height: 10px;
+  background: oklch(var(--p));
+  border-radius: 50%;
+  position: fixed;
+  pointer-events: none;
+  z-index: 99999;
+  transition: transform 0.15s ease-out, background 0.3s ease;
+  box-shadow: 0 0 10px oklch(var(--p) / 0.5);
+}
+
+.cursor-ring {
+  width: 40px;
+  height: 40px;
+  border: 2px solid oklch(var(--p) / 0.6);
+  border-radius: 50%;
+  position: fixed;
+  pointer-events: none;
+  z-index: 99998;
+  transform: translate(-50%, -50%);
+  transition: width 0.2s ease, height 0.2s ease, border-color 0.3s ease, background 0.2s ease;
+}
+
+.cursor-ring.hover {
+  width: 55px;
+  height: 55px;
+  border-color: oklch(var(--s) / 0.7);
+  background: oklch(var(--s) / 0.1);
+}
+
+.cursor-ring.clicking {
+  width: 35px;
+  height: 35px;
+  border-color: oklch(var(--a) / 0.8);
+  background: oklch(var(--a) / 0.15);
+}
+
+/* Component styles */
+@layer components {
+  /* Hide default details marker */
+  details.dropdown > summary {
+    list-style: none;
+  }
+
+  details.dropdown > summary::-webkit-details-marker {
+    display: none;
+  }
+
+  details.dropdown > summary::marker {
+    display: none;
+    content: "";
+  }
+
+  /* Smooth dropdown animation */
+  details.dropdown[open] > .dropdown-content {
+    animation: dropdown-open 0.15s ease-out;
+  }
+
+  @keyframes dropdown-open {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Ensure dropdown closes when clicking outside */
+  details.dropdown > .dropdown-content {
+    position: absolute;
+  }
+
+  /* Force single column layout for dropdown menus */
+  .dropdown-content.menu {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+  }
+
+  .dropdown-content.menu > li {
+    width: 100%;
+    flex-shrink: 0;
+  }
+
+  /* Ensure menu items don't wrap */
+  .dropdown-content.menu > li > button,
+  .dropdown-content.menu > li > a {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Custom scrollbar styling */
+  .custom-scrollbar::-webkit-scrollbar,
+  .dropdown-content::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track,
+  .dropdown-content::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb,
+  .dropdown-content::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--bc) / 0.15);
+    border-radius: 3px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover,
+  .dropdown-content::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(var(--bc) / 0.3);
+  }
+
+  /* Card hover effects */
+  .card-hover {
+    @apply transition-all duration-200;
+  }
+
+  .card-hover:hover {
+    @apply shadow-lg -translate-y-0.5;
+  }
+
+  /* Stat card improvements */
+  .stat {
+    @apply p-4;
+  }
+
+  .stat-title {
+    @apply text-xs font-medium opacity-60;
+  }
+
+  .stat-value {
+    @apply text-2xl font-bold leading-tight;
+  }
+
+  .stat-desc {
+    @apply text-xs opacity-50 mt-1;
+  }
+
+  /* Better button styles */
+  .btn {
+    @apply font-medium;
+  }
+
+  .btn-ghost:hover {
+    @apply bg-base-200;
+  }
+
+  /* Chart container styles */
+  .chart-container {
+    @apply relative;
+  }
+
+  .chart-container .recharts-wrapper {
+    @apply cursor-crosshair;
+  }
+
+  /* Legend styling */
+  .recharts-legend-wrapper {
+    @apply text-sm;
+  }
+
+  /* Tooltip styling */
+  .recharts-tooltip-wrapper {
+    @apply z-50;
+  }
+
+  /* Form improvements */
+  .form-control .label {
+    @apply pb-1;
+  }
+
+  .form-control .label-text {
+    @apply text-sm font-medium text-base-content/70;
+  }
+
+  /* Alert improvements */
+  .alert {
+    @apply text-sm;
+  }
+
+  /* Badge improvements */
+  .badge {
+    @apply font-medium;
+  }
+
+  /* Table improvements */
+  .table th {
+    @apply text-xs font-semibold uppercase tracking-wider text-base-content/60;
+  }
+
+  /* Loading states */
+  .skeleton-pulse {
+    @apply animate-pulse bg-base-300/50 rounded;
+  }
+
+  /* Glass card effect */
+  .glass-card {
+    @apply bg-base-100/70 backdrop-blur-md border border-base-200/50 shadow-lg;
+    @apply transition-all duration-300 ease-out;
+  }
+
+  .glass-card:hover {
+    @apply bg-base-100/80 shadow-xl border-base-300/50;
+    transform: translateY(-2px);
+  }
+
+  /* Glass effect for dark themes */
+  .glass-effect {
+    @apply bg-base-100/80 backdrop-blur-sm;
+  }
+
+  /* Gradient text */
+  .gradient-text {
+    @apply bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent;
+  }
+}
+
+/* Utility classes */
+@layer utilities {
+  /* Hide scrollbar but keep functionality */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Thin scrollbar */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+  }
+
+  /* Text balance */
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Animation utilities */
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Shadow utilities */
+  .shadow-soft {
+    box-shadow: 0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04);
+  }
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  .print-break-before {
+    page-break-before: always;
+  }
+
+  .print-break-after {
+    page-break-after: always;
+  }
+}
