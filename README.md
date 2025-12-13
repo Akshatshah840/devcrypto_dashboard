@@ -1,14 +1,41 @@
-# GitHub Activity + Air Quality Dashboard
+# DevCrypto Analytics Dashboard
 
-A data mashup application that explores correlations between developer productivity and environmental air quality across major tech hub cities.
+A data analytics application that explores correlations between GitHub developer activity and cryptocurrency price movements. The system fetches real-time crypto data from CoinGecko API and GitHub activity metrics to provide interactive visualizations and statistical analysis.
+
+## Live Demo
+
+**Frontend:** https://main.d2dd880sz9vcam.amplifyapp.com/
+
+## Features
+
+- Real-time cryptocurrency price tracking (Bitcoin, Ethereum, Solana, etc.)
+- GitHub repository activity monitoring for crypto projects
+- Correlation analysis between developer activity and price movements
+- Interactive charts and visualizations
+- Multiple theme support (32 DaisyUI themes)
+- AWS Cognito authentication
+- Data export functionality (JSON/CSV)
 
 ## Project Structure
 
 ```
 ├── frontend/          # React + Vite frontend application
-├── backend/           # Node.js + Express backend API
+├── backend/           # Node.js + Express backend API (Lambda ready)
+├── amplify.yml        # AWS Amplify build configuration
 ├── package.json       # Root package.json with workspace configuration
-└── README.md         # This file
+└── README.md          # This file
+```
+
+## AWS Architecture
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                   AWS Infrastructure                     │
+├─────────────────────────────────────────────────────────┤
+│  Cognito (Auth) ✅    │  Amplify Hosting (Frontend) ✅  │
+│  API Gateway          │  Lambda (Backend API)           │
+│  DynamoDB (Cache)     │  CloudWatch (Logs)              │
+└─────────────────────────────────────────────────────────┘
 ```
 
 ## Getting Started
@@ -17,52 +44,42 @@ A data mashup application that explores correlations between developer productiv
 
 - Node.js 18.0.0 or higher
 - npm or yarn
+- AWS Account (for deployment)
 
 ### Installation
 
-1. Install dependencies for all workspaces:
+1. Install dependencies:
 ```bash
 npm run install:all
 ```
 
-2. Start the development servers:
+2. Set up environment variables:
+```bash
+# Frontend (.env)
+VITE_COGNITO_USER_POOL_ID=your-user-pool-id
+VITE_COGNITO_CLIENT_ID=your-client-id
+VITE_API_URL=your-api-url
+
+# Backend (.env)
+GITHUB_TOKEN=your-github-token (optional, for higher rate limits)
+```
+
+3. Start the development servers:
 ```bash
 npm run dev
 ```
 
-This will start both the frontend (http://localhost:3000) and backend (http://localhost:5000) concurrently.
-
-### Development Scripts
-
-- `npm run dev` - Start both frontend and backend in development mode
-- `npm run dev:frontend` - Start only the frontend development server
-- `npm run dev:backend` - Start only the backend development server
-- `npm run build` - Build both frontend and backend for production
-- `npm run test` - Run tests for both frontend and backend
-
-### Frontend (React + Vite)
-
-- **Port**: 3000
-- **Framework**: React 18 with TypeScript
-- **Styling**: Tailwind CSS + DaisyUI (32 themes available)
-- **Charts**: Recharts for data visualization
-- **Testing**: Jest + React Testing Library + fast-check
-
-### Backend (Node.js + Express)
-
-- **Port**: 5000
-- **Framework**: Express with TypeScript
-- **Features**: CORS, rate limiting, error handling
-- **Testing**: Jest + Supertest + fast-check
-
 ## API Endpoints
 
-- `GET /api/health` - Health check endpoint
-- `GET /api/cities` - List supported tech hub cities
-- `GET /api/github/:city/:days` - GitHub activity data
-- `GET /api/airquality/:city/:days` - Air quality data
-- `GET /api/correlation/:city/:days` - Correlation analysis
-- `GET /api/export/:format/:city/:days` - Data export (JSON/CSV)
+### Crypto Endpoints
+- `GET /api/crypto/coins` - List supported cryptocurrencies
+- `GET /api/crypto/price/:coinId` - Current price for a coin
+- `GET /api/crypto/:coinId/:days` - Historical price data
+- `GET /api/crypto/github/:coinId/:days` - GitHub activity for crypto repos
+- `GET /api/crypto/correlation/:coinId/:days` - Correlation analysis
+
+### Supported Cryptocurrencies
+Bitcoin, Ethereum, Solana, Cardano, Dogecoin, XRP, Polkadot, Avalanche
 
 ## Tech Stack
 
@@ -71,26 +88,37 @@ This will start both the frontend (http://localhost:3000) and backend (http://lo
 - Vite for build tooling
 - Tailwind CSS + DaisyUI for styling
 - Recharts for data visualization
+- AWS Amplify for authentication
 - React Router for navigation
-- Axios for HTTP requests
 
 ### Backend
 - Node.js + Express + TypeScript
-- CORS and rate limiting middleware
-- Axios for external API calls
-- Node-cron for scheduled tasks
+- Serverless-http for Lambda deployment
+- CoinGecko API for crypto data
+- GitHub API for repository activity
+- Rate limiting and caching
 
-### Testing
-- Jest for unit testing
-- React Testing Library for frontend component testing
-- Supertest for backend API testing
-- fast-check for property-based testing
+### AWS Services
+- AWS Cognito - User authentication
+- AWS Amplify - Frontend hosting with CI/CD
+- AWS Lambda - Serverless backend (planned)
+- AWS API Gateway - API management (planned)
+- AWS DynamoDB - Data caching (planned)
 
-## Development
+## Deployment
 
-The project uses a monorepo structure with npm workspaces. The frontend proxies API requests to the backend during development.
+### Frontend (Amplify)
+The frontend is automatically deployed via AWS Amplify when pushing to the main branch.
 
-### Available Themes
+### Backend (Lambda)
+```bash
+cd backend
+npm run build
+zip -r lambda-backend.zip dist/ node_modules/ package.json
+# Upload to AWS Lambda
+```
 
-The frontend supports 32 DaisyUI themes:
-light, dark, cupcake, bumblebee, emerald, corporate, synthwave, retro, cyberpunk, valentine, halloween, garden, forest, aqua, lofi, pastel, fantasy, wireframe, black, luxury, dracula, cmyk, autumn, business, acid, lemonade, night, coffee, winter, dim, nord, sunset
+## Available Themes
+
+The frontend supports 32 DaisyUI themes including:
+light, dark, synthwave, cyberpunk, dracula, night, coffee, and more.

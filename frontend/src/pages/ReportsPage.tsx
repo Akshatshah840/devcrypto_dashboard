@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { useSelectedCity, useSelectedPeriod } from '../contexts/DashboardContext';
+import { useSelectedPeriod } from '../contexts/DashboardContext';
 import { ExportFormat, TimePeriod } from '../types';
-import { TECH_HUB_CITIES } from '../data/cities';
+import { CRYPTO_COINS } from '../data/coins';
 
 const TIME_PERIODS: { value: TimePeriod; label: string }[] = [
   { value: 7, label: '7 days' },
@@ -13,7 +13,7 @@ const TIME_PERIODS: { value: TimePeriod; label: string }[] = [
 
 interface ExportRequest {
   id: string;
-  city: string;
+  coinId: string;
   period: TimePeriod;
   format: ExportFormat;
   timestamp: string;
@@ -24,23 +24,22 @@ interface ExportRequest {
 }
 
 const ReportsPage: React.FC = () => {
-  const { selectedCity } = useSelectedCity();
   const { selectedPeriod } = useSelectedPeriod();
   const [exportHistory, setExportHistory] = useState<ExportRequest[]>([]);
   const [currentExport, setCurrentExport] = useState<ExportRequest | null>(null);
-  const [exportCity, setExportCity] = useState<string>('bangalore');
+  const [exportCoin, setExportCoin] = useState<string>('bitcoin');
   const [exportPeriod, setExportPeriod] = useState<TimePeriod>(30);
 
-  const cityDropdownRef = useRef<HTMLDetailsElement>(null);
+  const coinDropdownRef = useRef<HTMLDetailsElement>(null);
   const periodDropdownRef = useRef<HTMLDetailsElement>(null);
 
   // Close other dropdown when one opens
-  const handleCityDropdownToggle = () => {
+  const handleCoinDropdownToggle = () => {
     if (periodDropdownRef.current) periodDropdownRef.current.open = false;
   };
 
   const handlePeriodDropdownToggle = () => {
-    if (cityDropdownRef.current) cityDropdownRef.current.open = false;
+    if (coinDropdownRef.current) coinDropdownRef.current.open = false;
   };
 
   // Close dropdowns when clicking outside
@@ -48,9 +47,9 @@ const ReportsPage: React.FC = () => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Node;
 
-      // Check if click is inside city dropdown
-      if (cityDropdownRef.current && !cityDropdownRef.current.contains(target)) {
-        cityDropdownRef.current.open = false;
+      // Check if click is inside coin dropdown
+      if (coinDropdownRef.current && !coinDropdownRef.current.contains(target)) {
+        coinDropdownRef.current.open = false;
       }
 
       // Check if click is inside period dropdown
@@ -82,7 +81,7 @@ const ReportsPage: React.FC = () => {
                 ...exp,
                 status: 'completed',
                 progress: 100,
-                downloadUrl: `/api/export/${exp.format}/${exp.city}/${exp.period}`
+                downloadUrl: `/api/crypto/${exp.coinId}/${exp.period}`
               }
             : exp
         ));
@@ -104,19 +103,14 @@ const ReportsPage: React.FC = () => {
     return interval;
   }, []);
 
-  const handleExport = useCallback(async (format: ExportFormat, customCity?: string, customPeriod?: TimePeriod) => {
-    const exportCity = customCity || selectedCity;
-    const exportPeriod = customPeriod || selectedPeriod;
-
-    if (!exportCity) {
-      alert('Please select a city first');
-      return;
-    }
+  const handleExport = useCallback(async (format: ExportFormat, customCoin?: string, customPeriod?: TimePeriod) => {
+    const coinToExport = customCoin || exportCoin;
+    const periodToExport = customPeriod || selectedPeriod;
 
     const exportRequest: ExportRequest = {
       id: generateExportId(),
-      city: exportCity,
-      period: exportPeriod,
+      coinId: coinToExport,
+      period: periodToExport,
       format,
       timestamp: new Date().toISOString(),
       status: 'pending',
@@ -141,13 +135,13 @@ const ReportsPage: React.FC = () => {
       simulateExportProgress(exportRequest.id);
     }, 500);
 
-  }, [selectedCity, selectedPeriod, simulateExportProgress]);
+  }, [exportCoin, selectedPeriod, simulateExportProgress]);
 
   const handleDownload = useCallback((exportRequest: ExportRequest) => {
     if (exportRequest.downloadUrl) {
       const link = document.createElement('a');
       link.href = exportRequest.downloadUrl;
-      link.download = `github-air-quality-${exportRequest.city}-${exportRequest.period}days-${new Date(exportRequest.timestamp).toISOString().split('T')[0]}.${exportRequest.format}`;
+      link.download = `devcrypto-${exportRequest.coinId}-${exportRequest.period}days-${new Date(exportRequest.timestamp).toISOString().split('T')[0]}.${exportRequest.format}`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -169,64 +163,49 @@ const ReportsPage: React.FC = () => {
     }
   }, [currentExport]);
 
-  if (!selectedCity) {
-    return (
-      <div className="p-6 flex items-center justify-center min-h-[60vh]">
-        <div className="text-center">
-          <div className="w-16 h-16 rounded-full bg-base-200 flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-base-content/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-          </div>
-          <h2 className="text-xl font-semibold text-base-content mb-2">Select a City</h2>
-          <p className="text-base-content/60">Choose a city from the header to export data</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="p-4 sm:p-6 space-y-6">
       {/* Export */}
       <div className="glass-card rounded-xl p-4 relative z-20">
         <h3 className="text-sm font-semibold text-base-content mb-4">Export Data</h3>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 relative">
-          {/* City Dropdown */}
+          {/* Coin Dropdown */}
           <div className="relative">
-            <details ref={cityDropdownRef} className="dropdown w-full">
+            <details ref={coinDropdownRef} className="dropdown w-full">
               <summary
                 className="btn btn-sm w-full justify-between bg-base-200 border-base-300 hover:bg-base-300 font-normal"
-                onClick={handleCityDropdownToggle}
+                onClick={handleCoinDropdownToggle}
               >
                 <span className="truncate">
-                  {TECH_HUB_CITIES.find(c => c.id === exportCity)?.name || 'Select City'}
+                  {CRYPTO_COINS.find(c => c.id === exportCoin)?.name || 'Select Coin'}
                 </span>
                 <svg className="w-4 h-4 opacity-60" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
                 </svg>
               </summary>
               <ul className="dropdown-content absolute left-0 z-[100] mt-1 p-2 shadow-xl bg-base-100/90 backdrop-blur-lg rounded-xl border border-base-200/50 w-full max-h-60 overflow-y-auto">
-              {TECH_HUB_CITIES.map((city) => (
-                <li key={city.id}>
+              {CRYPTO_COINS.map((coin) => (
+                <li key={coin.id}>
                   <button
                     type="button"
                     onClick={() => {
-                      setExportCity(city.id);
-                      if (cityDropdownRef.current) cityDropdownRef.current.open = false;
+                      setExportCoin(coin.id);
+                      if (coinDropdownRef.current) coinDropdownRef.current.open = false;
                     }}
                     className={`flex items-center gap-2 w-full px-3 py-2 rounded-md text-left text-sm transition-colors ${
-                      exportCity === city.id
+                      exportCoin === coin.id
                         ? 'bg-primary/10 text-primary font-medium'
                         : 'hover:bg-base-300 text-base-content'
                     }`}
                   >
-                    <span className="flex-1">{city.name}</span>
-                    {exportCity === city.id && (
+                    <span className="w-3 h-3 rounded-full" style={{ backgroundColor: coin.color }} />
+                    <span className="flex-1">{coin.name} ({coin.symbol})</span>
+                    {exportCoin === coin.id && (
                       <svg className="w-4 h-4 text-primary" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                       </svg>
                     )}
-                      </button>
+                  </button>
                 </li>
               ))}
               </ul>
@@ -277,14 +256,14 @@ const ReportsPage: React.FC = () => {
           <div className="flex gap-2">
             <button
               className="btn btn-primary btn-sm flex-1"
-              onClick={() => handleExport('json', exportCity, exportPeriod)}
+              onClick={() => handleExport('json', exportCoin, exportPeriod)}
               disabled={!!currentExport}
             >
               JSON
             </button>
             <button
               className="btn btn-secondary btn-sm flex-1"
-              onClick={() => handleExport('csv', exportCity, exportPeriod)}
+              onClick={() => handleExport('csv', exportCoin, exportPeriod)}
               disabled={!!currentExport}
             >
               CSV
@@ -298,7 +277,7 @@ const ReportsPage: React.FC = () => {
         <div className="glass-card rounded-xl p-4 relative z-10">
           <div className="flex items-center justify-between mb-3">
             <span className="text-sm font-medium">
-              Exporting {currentExport.city.replace('-', ' ')} ({currentExport.format.toUpperCase()})
+              Exporting {CRYPTO_COINS.find(c => c.id === currentExport.coinId)?.name || currentExport.coinId} ({currentExport.format.toUpperCase()})
             </span>
             <button className="btn btn-xs btn-ghost text-error" onClick={cancelExport}>
               Cancel
@@ -339,7 +318,7 @@ const ReportsPage: React.FC = () => {
                     {exportReq.format.toUpperCase()}
                   </span>
                   <span className="text-sm font-medium">
-                    {exportReq.city.replace('-', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}
+                    {CRYPTO_COINS.find(c => c.id === exportReq.coinId)?.name || exportReq.coinId}
                   </span>
                   <span className="text-xs text-base-content/50">
                     {exportReq.period}d

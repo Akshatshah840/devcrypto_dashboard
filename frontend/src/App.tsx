@@ -171,7 +171,7 @@ function AppRoutes() {
         path="/*"
         element={
           <ProtectedRoute>
-            <DashboardProvider initialCity="bangalore" initialPeriod={30}>
+            <DashboardProvider initialPeriod={30}>
               <DashboardLayout />
             </DashboardProvider>
           </ProtectedRoute>

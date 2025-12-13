@@ -1,7 +1,7 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "description": "Backend API for GitHub Air Quality Dashboard",
+  "description": "Backend API for DevCrypto Analytics Dashboard",
   "main": "dist/server.js",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
@@ -16,7 +16,8 @@
     "dotenv": "^17.2.3",
     "express": "^4.18.2",
     "express-rate-limit": "^7.1.5",
-    "node-cron": "^3.0.3"
+    "node-cron": "^3.0.3",
+    "serverless-http": "^4.0.0"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
