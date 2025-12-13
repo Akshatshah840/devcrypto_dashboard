@@ -130,6 +130,11 @@ const ComparisonPage: React.FC = () => {
     return 'Very Weak';
   };
 
+  // Insight-led title
+  const primaryCorrelation = correlationStats?.commits_price ?? 0;
+  const relationshipStrength = getCorrelationLabel(primaryCorrelation);
+  const relationshipDirection = primaryCorrelation >= 0 ? 'Positive' : 'Negative';
+
   const formatPrice = (price: number) => {
     if (price >= 1000) return `$${(price / 1000).toFixed(1)}k`;
     if (price >= 1) return `$${price.toFixed(2)}`;
@@ -174,7 +179,10 @@ const ComparisonPage: React.FC = () => {
     <div className="p-4 sm:p-6 space-y-6">
       {/* Coin Selector */}
       <div className="glass-card rounded-xl p-4">
-        <h3 className="text-sm font-semibold text-base-content mb-3">Select Cryptocurrency to Compare</h3>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-semibold text-base-content">Compare Asset</h3>
+          <span className="text-xs text-base-content/40 font-medium">{CRYPTO_COINS.length} available</span>
+        </div>
         <div className="flex flex-wrap gap-2">
           {CRYPTO_COINS.map((coin) => (
             <button
@@ -186,6 +194,7 @@ const ComparisonPage: React.FC = () => {
                   : 'bg-base-200 hover:bg-base-300 text-base-content'
               }`}
               style={selectedCoin === coin.id ? { backgroundColor: coin.color } : {}}
+              title={`Analyze ${coin.name} correlation`}
             >
               {coin.symbol}
             </button>
@@ -196,51 +205,55 @@ const ComparisonPage: React.FC = () => {
       {/* Correlation Matrix Cards */}
       {correlationStats && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="glass-card rounded-xl p-4">
-            <div className="text-xs font-medium text-base-content/60 uppercase tracking-wide mb-2">
-              Commits ↔ Price
+          <div className="glass-card rounded-xl p-4 cursor-default" title="Statistical relationship between code commits and price movement">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-semibold text-base-content/60 uppercase tracking-wider">Commits → Price</span>
             </div>
-            <div className={`text-2xl font-bold ${getCorrelationColor(correlationStats.commits_price)}`}>
-              {(correlationStats.commits_price * 100).toFixed(0)}%
+            <div className={`text-2xl font-bold tracking-tight ${getCorrelationColor(correlationStats.commits_price)}`}>
+              {correlationStats.commits_price >= 0 ? '+' : ''}{(correlationStats.commits_price * 100).toFixed(0)}%
             </div>
-            <div className="text-xs text-base-content/50 mt-1">
-              {getCorrelationLabel(correlationStats.commits_price)}
-            </div>
-          </div>
-
-          <div className="glass-card rounded-xl p-4">
-            <div className="text-xs font-medium text-base-content/60 uppercase tracking-wide mb-2">
-              Commits ↔ Volume
-            </div>
-            <div className={`text-2xl font-bold ${getCorrelationColor(correlationStats.commits_volume)}`}>
-              {(correlationStats.commits_volume * 100).toFixed(0)}%
-            </div>
-            <div className="text-xs text-base-content/50 mt-1">
-              {getCorrelationLabel(correlationStats.commits_volume)}
+            <div className="flex items-center gap-1.5 mt-1.5">
+              <span className={`inline-block w-1.5 h-1.5 rounded-full ${Math.abs(correlationStats.commits_price) >= 0.5 ? 'bg-success' : 'bg-base-content/30'}`} />
+              <span className="text-xs text-base-content/50 font-medium">{getCorrelationLabel(correlationStats.commits_price)}</span>
             </div>
           </div>
 
-          <div className="glass-card rounded-xl p-4">
-            <div className="text-xs font-medium text-base-content/60 uppercase tracking-wide mb-2">
-              PRs ↔ Price
+          <div className="glass-card rounded-xl p-4 cursor-default" title="Statistical relationship between code commits and trading volume">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-semibold text-base-content/60 uppercase tracking-wider">Commits → Vol</span>
             </div>
-            <div className={`text-2xl font-bold ${getCorrelationColor(correlationStats.pullRequests_price)}`}>
-              {(correlationStats.pullRequests_price * 100).toFixed(0)}%
+            <div className={`text-2xl font-bold tracking-tight ${getCorrelationColor(correlationStats.commits_volume)}`}>
+              {correlationStats.commits_volume >= 0 ? '+' : ''}{(correlationStats.commits_volume * 100).toFixed(0)}%
             </div>
-            <div className="text-xs text-base-content/50 mt-1">
-              {getCorrelationLabel(correlationStats.pullRequests_price)}
+            <div className="flex items-center gap-1.5 mt-1.5">
+              <span className={`inline-block w-1.5 h-1.5 rounded-full ${Math.abs(correlationStats.commits_volume) >= 0.5 ? 'bg-success' : 'bg-base-content/30'}`} />
+              <span className="text-xs text-base-content/50 font-medium">{getCorrelationLabel(correlationStats.commits_volume)}</span>
             </div>
           </div>
 
-          <div className="glass-card rounded-xl p-4">
-            <div className="text-xs font-medium text-base-content/60 uppercase tracking-wide mb-2">
-              Stars ↔ Price
+          <div className="glass-card rounded-xl p-4 cursor-default" title="Statistical relationship between pull requests and price movement">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-semibold text-base-content/60 uppercase tracking-wider">PRs → Price</span>
             </div>
-            <div className={`text-2xl font-bold ${getCorrelationColor(correlationStats.stars_price)}`}>
-              {(correlationStats.stars_price * 100).toFixed(0)}%
+            <div className={`text-2xl font-bold tracking-tight ${getCorrelationColor(correlationStats.pullRequests_price)}`}>
+              {correlationStats.pullRequests_price >= 0 ? '+' : ''}{(correlationStats.pullRequests_price * 100).toFixed(0)}%
             </div>
-            <div className="text-xs text-base-content/50 mt-1">
-              {getCorrelationLabel(correlationStats.stars_price)}
+            <div className="flex items-center gap-1.5 mt-1.5">
+              <span className={`inline-block w-1.5 h-1.5 rounded-full ${Math.abs(correlationStats.pullRequests_price) >= 0.5 ? 'bg-success' : 'bg-base-content/30'}`} />
+              <span className="text-xs text-base-content/50 font-medium">{getCorrelationLabel(correlationStats.pullRequests_price)}</span>
+            </div>
+          </div>
+
+          <div className="glass-card rounded-xl p-4 cursor-default" title="Statistical relationship between GitHub stars and price movement">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-semibold text-base-content/60 uppercase tracking-wider">Stars → Price</span>
+            </div>
+            <div className={`text-2xl font-bold tracking-tight ${getCorrelationColor(correlationStats.stars_price)}`}>
+              {correlationStats.stars_price >= 0 ? '+' : ''}{(correlationStats.stars_price * 100).toFixed(0)}%
+            </div>
+            <div className="flex items-center gap-1.5 mt-1.5">
+              <span className={`inline-block w-1.5 h-1.5 rounded-full ${Math.abs(correlationStats.stars_price) >= 0.5 ? 'bg-success' : 'bg-base-content/30'}`} />
+              <span className="text-xs text-base-content/50 font-medium">{getCorrelationLabel(correlationStats.stars_price)}</span>
             </div>
           </div>
         </div>
@@ -258,10 +271,10 @@ const ComparisonPage: React.FC = () => {
             </div>
             <div>
               <h3 className="text-sm font-semibold text-base-content">
-                GitHub Activity vs {selectedCoinData?.name}
+                {relationshipStrength} {relationshipDirection} Relationship
               </h3>
-              <p className="text-xs text-base-content/50">
-                {chartView === 'scatter' ? 'Scatter plot showing direct correlation' : 'Timeline showing changes over time'}
+              <p className="text-xs text-base-content/40">
+                {selectedCoinData?.symbol} vs Developer Activity · {selectedPeriod}D
               </p>
             </div>
           </div>
@@ -275,6 +288,7 @@ const ComparisonPage: React.FC = () => {
                   ? 'bg-base-100 text-base-content shadow-sm'
                   : 'text-base-content/60 hover:text-base-content'
               }`}
+              title="View changes over time"
             >
               Timeline
             </button>
@@ -285,8 +299,9 @@ const ComparisonPage: React.FC = () => {
                   ? 'bg-base-100 text-base-content shadow-sm'
                   : 'text-base-content/60 hover:text-base-content'
               }`}
+              title="View direct correlation"
             >
-              Scatter Plot
+              Scatter
             </button>
           </div>
         </div>
@@ -414,10 +429,10 @@ const ComparisonPage: React.FC = () => {
 
         {/* Chart explanation */}
         <div className="mt-4 pt-4 border-t border-base-200">
-          <p className="text-xs text-base-content/50">
+          <p className="text-xs text-base-content/40 font-medium">
             {chartView === 'scatter'
-              ? '📊 Scatter Plot: Each dot represents one day. Points clustered along a diagonal line indicate correlation. Vertical spread shows variance.'
-              : '📈 Timeline: Shows how commits (bars) and price (line) change over time. Similar patterns indicate temporal correlation.'}
+              ? 'Each dot = 1 day · Diagonal clustering = correlation · Hover for details'
+              : 'Bars = commits · Line = price · Similar patterns = correlation'}
           </p>
         </div>
       </div>
@@ -425,29 +440,22 @@ const ComparisonPage: React.FC = () => {
       {/* Interpretation */}
       {correlation.data && (
         <div className="glass-card rounded-xl p-4">
-          <h3 className="text-sm font-semibold text-base-content mb-3">Analysis</h3>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-base-content">Insight</h3>
+            <span className="text-xs text-base-content/40 font-medium">{correlation.data.dataPoints} samples</span>
+          </div>
           <div className="bg-base-200/30 rounded-lg p-4">
             <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-                <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                 </svg>
               </div>
-              <div>
-                <div className="text-sm font-medium text-base-content mb-1">AI Interpretation</div>
-                <p className="text-sm text-base-content/70">{correlation.data.interpretation}</p>
-                <div className="flex items-center gap-4 mt-3 text-xs text-base-content/50">
-                  <span className="flex items-center gap-1">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+              <div className="flex-1">
+                <p className="text-sm text-base-content/70 leading-relaxed">{correlation.data.interpretation}</p>
+                <div className="mt-2">
+                  <span className="text-[10px] text-base-content/40 font-medium uppercase tracking-wider">
                     Confidence: {(correlation.data.confidence * 100).toFixed(0)}%
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
-                    </svg>
-                    Data points: {correlation.data.dataPoints}
                   </span>
                 </div>
               </div>
@@ -456,50 +464,49 @@ const ComparisonPage: React.FC = () => {
         </div>
       )}
 
-      {/* Methodology & Legend */}
+      {/* Legend & Note */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Correlation Legend */}
         <div className="glass-card rounded-xl p-4">
-          <h3 className="text-sm font-semibold text-base-content mb-3">Correlation Strength Guide</h3>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-base-content">Strength Guide</h3>
+          </div>
           <div className="space-y-2">
-            <div className="flex items-center gap-3">
-              <span className="w-3 h-3 rounded-full bg-success" />
-              <span className="text-sm">Strong (≥70%)</span>
-              <span className="text-xs text-base-content/50 ml-auto">Clear relationship</span>
+            <div className="flex items-center gap-3 hover:bg-base-200/30 -mx-2 px-2 py-1 rounded transition-colors">
+              <span className="w-2.5 h-2.5 rounded-full bg-success" />
+              <span className="text-xs font-medium text-base-content">Strong</span>
+              <span className="text-xs text-base-content/40 ml-auto">≥70%</span>
             </div>
-            <div className="flex items-center gap-3">
-              <span className="w-3 h-3 rounded-full bg-warning" />
-              <span className="text-sm">Moderate (50-70%)</span>
-              <span className="text-xs text-base-content/50 ml-auto">Notable pattern</span>
+            <div className="flex items-center gap-3 hover:bg-base-200/30 -mx-2 px-2 py-1 rounded transition-colors">
+              <span className="w-2.5 h-2.5 rounded-full bg-warning" />
+              <span className="text-xs font-medium text-base-content">Moderate</span>
+              <span className="text-xs text-base-content/40 ml-auto">50-70%</span>
             </div>
-            <div className="flex items-center gap-3">
-              <span className="w-3 h-3 rounded-full bg-info" />
-              <span className="text-sm">Weak (30-50%)</span>
-              <span className="text-xs text-base-content/50 ml-auto">Some connection</span>
+            <div className="flex items-center gap-3 hover:bg-base-200/30 -mx-2 px-2 py-1 rounded transition-colors">
+              <span className="w-2.5 h-2.5 rounded-full bg-info" />
+              <span className="text-xs font-medium text-base-content">Weak</span>
+              <span className="text-xs text-base-content/40 ml-auto">30-50%</span>
             </div>
-            <div className="flex items-center gap-3">
-              <span className="w-3 h-3 rounded-full bg-base-300" />
-              <span className="text-sm">Very Weak (&lt;30%)</span>
-              <span className="text-xs text-base-content/50 ml-auto">Little/no relationship</span>
+            <div className="flex items-center gap-3 hover:bg-base-200/30 -mx-2 px-2 py-1 rounded transition-colors">
+              <span className="w-2.5 h-2.5 rounded-full bg-base-300" />
+              <span className="text-xs font-medium text-base-content">Very Weak</span>
+              <span className="text-xs text-base-content/40 ml-auto">&lt;30%</span>
             </div>
           </div>
         </div>
 
-        {/* Methodology */}
-        <div className="glass-card rounded-xl p-4">
-          <h3 className="text-sm font-semibold text-base-content mb-3">Visualization Methodology</h3>
-          <div className="space-y-2 text-xs text-base-content/70">
-            <p>
-              <span className="font-medium">Scatter Plot:</span> Shows direct correlation between commits and price.
-              Points clustered along a diagonal indicate correlation.
-            </p>
-            <p>
-              <span className="font-medium">Timeline:</span> Dual-axis chart showing both metrics over time.
-              Similar wave patterns suggest temporal correlation.
-            </p>
-            <p className="text-base-content/50 pt-2 border-t border-base-200 mt-2">
-              Note: Correlation does not imply causation. These visualizations show statistical relationships, not causal links.
-            </p>
+        {/* Important Note */}
+        <div className="glass-card rounded-xl p-4 bg-base-200/30">
+          <div className="flex items-start gap-3">
+            <svg className="w-4 h-4 text-base-content/40 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div>
+              <h3 className="text-xs font-semibold text-base-content mb-1">Important</h3>
+              <p className="text-xs text-base-content/50 leading-relaxed">
+                Correlation shows statistical relationships, not causation. A positive correlation means the variables tend to move together, but doesn't prove one causes the other.
+              </p>
+            </div>
           </div>
         </div>
       </div>
