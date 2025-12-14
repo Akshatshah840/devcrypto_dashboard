@@ -4,7 +4,10 @@ import autoTable from 'jspdf-autotable';
 import { ExportFormat, TimePeriod, GitHubActivity, CryptoData, CorrelationResult } from '../types';
 import { CRYPTO_COINS } from '../data/coins';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL ||
+  (import.meta.env.PROD
+    ? 'https://vfi61er622.execute-api.eu-north-1.amazonaws.com/api'
+    : 'http://localhost:5000/api');
 
 const TIME_PERIODS: { value: TimePeriod; label: string }[] = [
   { value: 7, label: '7 days' },
