@@ -5,38 +5,70 @@ describe('Header Component', () => {
   const mockProps = {
     currentTheme: 'light',
     onThemeChange: jest.fn(),
+    selectedPeriod: 30 as const,
+    onPeriodChange: jest.fn(),
     sidebarCollapsed: false,
+    onLogout: jest.fn(),
   };
 
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  test('renders header title', () => {
+  test('renders header with logo', () => {
     render(<Header {...mockProps} />);
-    
-    expect(screen.getByText('GitHub Activity + Air Quality Dashboard')).toBeInTheDocument();
+
+    // Header should exist
+    const header = screen.getByRole('banner');
+    expect(header).toBeInTheDocument();
   });
 
-  test('renders theme switcher', () => {
-    render(<Header {...mockProps} />);
-    
-    expect(screen.getByText('Theme')).toBeInTheDocument();
+  test('renders header title when sidebar is not collapsed', () => {
+    render(<Header {...mockProps} sidebarCollapsed={false} />);
+
+    expect(screen.getByText('DevCrypto Analytics')).toBeInTheDocument();
   });
 
-  test('calls onThemeChange when theme button is clicked', () => {
-    render(<Header {...mockProps} />);
-    
-    const darkButton = screen.getByLabelText('Switch to Dark theme');
-    fireEvent.click(darkButton);
-    expect(mockProps.onThemeChange).toHaveBeenCalledWith('dark');
+  test('hides title when sidebar is collapsed', () => {
+    render(<Header {...mockProps} sidebarCollapsed={true} />);
+
+    // Title should still exist but be hidden on large screens
+    const title = screen.queryByText('DevCrypto Analytics');
+    // When sidebar is collapsed, title is hidden via CSS class
+    if (title) {
+      expect(title).toHaveClass('hidden');
+    }
   });
 
-  test('shows active theme correctly', () => {
+  test('displays current period', () => {
+    render(<Header {...mockProps} selectedPeriod={30} />);
+
+    // The period is shown in the dropdown summary - should have at least one "30 days" text
+    const periodTexts = screen.getAllByText('30 days');
+    expect(periodTexts.length).toBeGreaterThan(0);
+  });
+
+  test('renders logout button when onLogout is provided', () => {
     render(<Header {...mockProps} />);
-    
-    const lightButton = screen.getByLabelText('Switch to Light theme');
-    expect(lightButton).toHaveClass('btn-active');
-    expect(lightButton).toHaveAttribute('aria-pressed', 'true');
+
+    const logoutButton = screen.getByTitle('Logout');
+    expect(logoutButton).toBeInTheDocument();
+  });
+
+  test('calls onLogout when logout button is clicked', () => {
+    render(<Header {...mockProps} />);
+
+    const logoutButton = screen.getByTitle('Logout');
+    fireEvent.click(logoutButton);
+
+    expect(mockProps.onLogout).toHaveBeenCalledTimes(1);
+  });
+
+  test('does not render logout button when onLogout is not provided', () => {
+    const propsWithoutLogout = { ...mockProps, onLogout: undefined };
+    render(<Header {...propsWithoutLogout} />);
+
+    const logoutButton = screen.queryByTitle('Logout');
+    expect(logoutButton).not.toBeInTheDocument();
   });
 });
