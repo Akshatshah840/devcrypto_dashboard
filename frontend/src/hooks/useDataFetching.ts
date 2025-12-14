@@ -16,7 +16,10 @@ import {
   generateMockCorrelation
 } from '../services/mockData';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL ||
+  (import.meta.env.PROD
+    ? 'https://vfi61er622.execute-api.eu-north-1.amazonaws.com/api'
+    : 'http://localhost:5000/api');
 
 // Create axios instance with default config
 const apiClient = axios.create({

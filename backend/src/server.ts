@@ -19,6 +19,9 @@ const SUPPORTED_COINS = [
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Trust proxy for AWS Lambda/API Gateway (trust only the first proxy)
+app.set('trust proxy', 1);
+
 // Request logging middleware
 app.use((req, res, next) => {
   const timestamp = new Date().toISOString();
@@ -29,7 +32,7 @@ app.use((req, res, next) => {
 // CORS middleware
 app.use(cors({
   origin: process.env.NODE_ENV === 'production'
-    ? ['https://your-domain.com'] // Replace with actual production domain
+    ? ['https://main.d2dd880sz9vcam.amplifyapp.com', 'https://d2dd880sz9vcam.amplifyapp.com']
     : ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:5173', 'http://127.0.0.1:5173'],
   credentials: true
 }));
@@ -48,6 +51,9 @@ const limiter = rateLimit({
   },
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  validate: {
+    trustProxy: false, // Disable validation since we're behind API Gateway
+  }
 });
 app.use('/api', limiter);
 
