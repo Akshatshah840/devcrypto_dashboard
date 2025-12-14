@@ -143,17 +143,26 @@ export const useCryptoData = (coinId: string, period: TimePeriod) => {
         throw new Error(response.data.error || 'Failed to fetch crypto data');
       }
     } catch (err) {
-      console.warn('API fetch failed, falling back to mock data:', err);
-      // Fallback to mock data
-      const mockData = generateMockCryptoData(coinId, period);
-      setData(mockData);
-      setSource('mock');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch crypto data';
 
-      dataCache[cacheKey] = {
-        data: mockData,
-        timestamp: Date.now(),
-        source: 'mock'
-      };
+      // In production, show error instead of mock data
+      if (import.meta.env.PROD) {
+        setError(errorMessage);
+        setData([]);
+        setSource('live');
+      } else {
+        // In development, fallback to mock data
+        console.warn('API fetch failed, falling back to mock data:', err);
+        const mockData = generateMockCryptoData(coinId, period);
+        setData(mockData);
+        setSource('mock');
+
+        dataCache[cacheKey] = {
+          data: mockData,
+          timestamp: Date.now(),
+          source: 'mock'
+        };
+      }
     } finally {
       setLoading(false);
     }
@@ -205,20 +214,29 @@ export const useCryptoCorrelationData = (coinId: string, period: TimePeriod) => 
         throw new Error(response.data.error || 'Failed to fetch correlation');
       }
     } catch (err) {
-      console.warn('API fetch failed, falling back to mock data:', err);
-      // Fallback to mock data
-      const githubData = generateMockGitHubData(period);
-      const cryptoData = generateMockCryptoData(coinId, period);
-      const correlationData = generateMockCorrelation(coinId, period, githubData, cryptoData);
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch correlation data';
 
-      setData(correlationData);
-      setSource('mock');
+      // In production, show error instead of mock data
+      if (import.meta.env.PROD) {
+        setError(errorMessage);
+        setData(null);
+        setSource('live');
+      } else {
+        // In development, fallback to mock data
+        console.warn('API fetch failed, falling back to mock data:', err);
+        const githubData = generateMockGitHubData(period);
+        const cryptoData = generateMockCryptoData(coinId, period);
+        const correlationData = generateMockCorrelation(coinId, period, githubData, cryptoData);
 
-      dataCache[cacheKey] = {
-        data: correlationData,
-        timestamp: Date.now(),
-        source: 'mock'
-      };
+        setData(correlationData);
+        setSource('mock');
+
+        dataCache[cacheKey] = {
+          data: correlationData,
+          timestamp: Date.now(),
+          source: 'mock'
+        };
+      }
     } finally {
       setLoading(false);
     }
@@ -270,17 +288,26 @@ export const useCryptoGitHubData = (coinId: string, period: TimePeriod) => {
         throw new Error(response.data.error || 'Failed to fetch GitHub data');
       }
     } catch (err) {
-      console.warn('API fetch failed, falling back to mock data:', err);
-      // Fallback to mock data
-      const mockData = generateMockGitHubData(period);
-      setData(mockData);
-      setSource('mock');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch GitHub data';
 
-      dataCache[cacheKey] = {
-        data: mockData,
-        timestamp: Date.now(),
-        source: 'mock'
-      };
+      // In production, show error instead of mock data
+      if (import.meta.env.PROD) {
+        setError(errorMessage);
+        setData([]);
+        setSource('live');
+      } else {
+        // In development, fallback to mock data
+        console.warn('API fetch failed, falling back to mock data:', err);
+        const mockData = generateMockGitHubData(period);
+        setData(mockData);
+        setSource('mock');
+
+        dataCache[cacheKey] = {
+          data: mockData,
+          timestamp: Date.now(),
+          source: 'mock'
+        };
+      }
     } finally {
       setLoading(false);
     }

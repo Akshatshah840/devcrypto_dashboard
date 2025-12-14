@@ -141,25 +141,31 @@ const ReportsPage: React.FC = () => {
         correlationSuccess: correlationRes.success
       });
 
-      // If no data from API, use mock
+      // If no data from API
       if (cryptoData.length === 0 && githubData.length === 0) {
+        // In production, throw error instead of using mock data
+        if (import.meta.env.PROD) {
+          throw new Error('API is not responding. Please try again later or contact support.');
+        }
+        // In development, use mock data
         console.log('No data from API, using mock data');
         return generateMockData(coinId, period);
       }
 
       return { cryptoData, githubData, correlationData };
     } catch (error) {
+      // In production, throw the error to show to user
+      if (import.meta.env.PROD) {
+        throw error;
+      }
+
+      // In development, fallback to mock data
       console.warn('API fetch failed, using mock data:', error);
       try {
         return generateMockData(coinId, period);
       } catch (mockError) {
         console.error('Mock data generation also failed:', mockError);
-        // Return minimal valid data structure
-        return {
-          cryptoData: [],
-          githubData: [],
-          correlationData: null
-        };
+        throw new Error('Failed to fetch export data');
       }
     }
   };
