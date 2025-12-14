@@ -2,8 +2,6 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
-import { TECH_HUB_CITIES } from './data/cities';
-import { dataService } from './services/dataService';
 import {
   getCryptoData,
   getGitHubActivityForCrypto,
@@ -54,17 +52,6 @@ const limiter = rateLimit({
 app.use('/api', limiter);
 
 // Request validation middleware for common parameters
-const validateCityParam = (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  const { city } = req.params;
-  if (city && !TECH_HUB_CITIES.find(c => c.id === city)) {
-    return res.status(400).json({
-      error: 'Invalid city parameter',
-      message: `City '${city}' is not supported. Use one of: ${TECH_HUB_CITIES.map(c => c.id).join(', ')}`
-    });
-  }
-  next();
-};
-
 const validateDaysParam = (req: express.Request, res: express.Response, next: express.NextFunction) => {
   const { days } = req.params;
   if (days) {
@@ -98,134 +85,6 @@ app.get('/api/health', (req, res) => {
     service: 'DevCrypto Analytics API',
     supportedCoins: SUPPORTED_COINS
   });
-});
-
-// API Routes
-
-// Cities endpoint - returns all supported tech hub cities
-app.get('/api/cities', (req, res) => {
-  try {
-    res.json({
-      success: true,
-      data: TECH_HUB_CITIES,
-      count: TECH_HUB_CITIES.length,
-      timestamp: new Date().toISOString()
-    });
-  } catch (error) {
-    console.error('Error fetching cities:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch cities data',
-      message: 'Internal server error'
-    });
-  }
-});
-
-// GitHub data endpoint
-app.get('/api/github/:city/:days', validateCityParam, validateDaysParam, async (req, res) => {
-  try {
-    const { city, days } = req.params;
-    const daysNum = parseInt(days, 10);
-    
-    console.log(`[API] Fetching GitHub data for ${city}, ${daysNum} days`);
-    
-    const result = await dataService.getGitHubData(city, daysNum);
-    
-    res.json({
-      success: true,
-      data: result.data,
-      metadata: {
-        city,
-        days: daysNum,
-        source: result.source,
-        message: result.message,
-        timestamp: new Date().toISOString(),
-        recordCount: result.data.length
-      },
-      error: result.error
-    });
-    
-  } catch (error) {
-    console.error('GitHub endpoint error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch GitHub data',
-      message: (error as Error).message,
-      timestamp: new Date().toISOString()
-    });
-  }
-});
-
-// Air quality data endpoint
-app.get('/api/airquality/:city/:days', validateCityParam, validateDaysParam, async (req, res) => {
-  try {
-    const { city, days } = req.params;
-    const daysNum = parseInt(days, 10);
-    
-    console.log(`[API] Fetching air quality data for ${city}, ${daysNum} days`);
-    
-    const result = await dataService.getAirQualityData(city, daysNum);
-    
-    res.json({
-      success: true,
-      data: result.data,
-      metadata: {
-        city,
-        days: daysNum,
-        source: result.source,
-        message: result.message,
-        timestamp: new Date().toISOString(),
-        recordCount: result.data.length
-      },
-      error: result.error
-    });
-    
-  } catch (error) {
-    console.error('Air quality endpoint error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch air quality data',
-      message: (error as Error).message,
-      timestamp: new Date().toISOString()
-    });
-  }
-});
-
-// Correlation analysis endpoint
-app.get('/api/correlation/:city/:days', validateCityParam, validateDaysParam, async (req, res) => {
-  try {
-    const { city, days } = req.params;
-    const daysNum = parseInt(days, 10);
-
-    console.log(`[API] Fetching correlation analysis for ${city}, ${daysNum} days`);
-
-    const result = await dataService.getCorrelationAnalysis(city, daysNum);
-
-    res.json({
-      success: true,
-      data: result.data,
-      metadata: {
-        city,
-        days: daysNum,
-        source: result.source,
-        message: result.message,
-        timestamp: new Date().toISOString(),
-        dataPoints: result.data.correlation.dataPoints,
-        confidence: result.data.correlation.confidence,
-        hasSignificantCorrelations: result.data.significance.hasSignificantCorrelations
-      },
-      error: result.error
-    });
-
-  } catch (error) {
-    console.error('Correlation endpoint error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to calculate correlation analysis',
-      message: (error as Error).message,
-      timestamp: new Date().toISOString()
-    });
-  }
 });
 
 // ==================== CRYPTO API ENDPOINTS ====================
@@ -363,12 +222,12 @@ app.get('/api/crypto/correlation/:coinId/:days', validateCoinParam, validateDays
 
 // ==================== END CRYPTO ENDPOINTS ====================
 
-// Data export endpoint
-app.get('/api/export/:format/:city/:days', validateCityParam, validateDaysParam, async (req, res) => {
+// Data export endpoint for crypto data
+app.get('/api/crypto/export/:format/:coinId/:days', validateCoinParam, validateDaysParam, async (req, res) => {
   try {
-    const { format, city, days } = req.params;
-    const daysNum = parseInt(days, 10);
-    
+    const { format, coinId, days } = req.params;
+    const daysNum = parseInt(days, 10) as TimePeriod;
+
     // Validate export format
     if (format !== 'json' && format !== 'csv') {
       return res.status(400).json({
@@ -377,141 +236,101 @@ app.get('/api/export/:format/:city/:days', validateCityParam, validateDaysParam,
         message: 'Format must be either "json" or "csv"'
       });
     }
-    
+
     // Parse exclude parameters
     const excludeParams = req.query.exclude as string | string[] | undefined;
     const excludeTypes = Array.isArray(excludeParams) ? excludeParams : (excludeParams ? [excludeParams] : []);
     const includeGitHub = !excludeTypes.includes('github');
-    const includeAirQuality = !excludeTypes.includes('airquality');
+    const includeCrypto = !excludeTypes.includes('crypto');
     const includeCorrelation = !excludeTypes.includes('correlation');
-    
-    console.log(`[API] Exporting data for ${city}, ${daysNum} days, format: ${format}, exclude: ${excludeTypes.join(',')}`);
-    
-    // Fetch only required data based on include flags
-    const promises: Promise<any>[] = [];
-    
-    if (includeGitHub) {
-      promises.push(dataService.getGitHubData(city, daysNum));
-    } else {
-      promises.push(Promise.resolve({ data: [], source: 'excluded' }));
-    }
-    
-    if (includeAirQuality) {
-      promises.push(dataService.getAirQualityData(city, daysNum));
-    } else {
-      promises.push(Promise.resolve({ data: [], source: 'excluded' }));
-    }
-    
-    if (includeCorrelation && includeGitHub && includeAirQuality) {
-      promises.push(dataService.getCorrelationAnalysis(city, daysNum));
-    } else {
-      promises.push(Promise.resolve({ data: { correlation: null }, source: 'excluded' }));
-    }
-    
-    const [githubResult, airQualityResult, correlationResult] = await Promise.all(promises);
-    
-    // Determine overall data source
-    const activeSources = [
-      includeGitHub ? githubResult.source : null,
-      includeAirQuality ? airQualityResult.source : null,
-      includeCorrelation ? correlationResult.source : null
-    ].filter(source => source && source !== 'excluded');
-    
-    const dataSource = activeSources.includes('mock') ? 'mock' : 'live';
-    
+
+    console.log(`[API] Exporting data for ${coinId}, ${daysNum} days, format: ${format}, exclude: ${excludeTypes.join(',')}`);
+
+    // Fetch data based on include flags
+    const [cryptoData, githubData, correlationData] = await Promise.all([
+      includeCrypto ? getCryptoData(coinId, daysNum) : [],
+      includeGitHub ? getGitHubActivityForCrypto(coinId, daysNum) : [],
+      includeCorrelation && includeGitHub && includeCrypto ? getCryptoCorrelation(coinId, daysNum) : null
+    ]);
+
     // Create export data structure
     const exportData: any = {
       metadata: {
-        city,
+        coinId,
         period: daysNum,
         exportFormat: format as 'json' | 'csv',
         generatedAt: new Date().toISOString(),
-        dataSource,
+        dataSource: 'live',
         includedDataTypes: {
           github: includeGitHub,
-          airQuality: includeAirQuality,
+          crypto: includeCrypto,
           correlation: includeCorrelation
-        },
-        dataSources: {
-          github: githubResult.source,
-          airQuality: airQualityResult.source,
-          correlation: correlationResult.source
         }
-      }
+      },
+      githubData: includeGitHub ? githubData : undefined,
+      cryptoData: includeCrypto ? cryptoData : undefined,
+      correlationData: includeCorrelation ? correlationData : undefined
     };
-    
-    // Add data based on include flags
-    if (includeGitHub) {
-      exportData.githubData = githubResult.data;
-    }
-    if (includeAirQuality) {
-      exportData.airQualityData = airQualityResult.data;
-    }
-    if (includeCorrelation) {
-      exportData.correlationData = correlationResult.data.correlation;
-    }
-    
+
     // Generate filename
     const timestamp = new Date().toISOString();
-    const sanitizedCity = city.replace(/[/\\:*?"<>|]/g, '-').trim();
     const dateStr = timestamp.replace(/[:.]/g, '-').split('T')[0];
-    const filename = `github-air-quality-${sanitizedCity}-${daysNum}days-${dateStr}.${format}`;
-    
+    const filename = `devcrypto-${coinId}-${daysNum}days-${dateStr}.${format}`;
+
     // Set appropriate headers
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-    
+
     if (format === 'json') {
       res.setHeader('Content-Type', 'application/json');
       res.json(exportData);
     } else {
       // CSV format
       res.setHeader('Content-Type', 'text/csv');
-      
+
       const lines: string[] = [];
-      
+
       // Add metadata header
-      lines.push('# Export Metadata');
-      lines.push(`# City: ${exportData.metadata.city}`);
+      lines.push('# DevCrypto Export');
+      lines.push(`# Coin: ${exportData.metadata.coinId}`);
       lines.push(`# Period: ${exportData.metadata.period} days`);
       lines.push(`# Generated: ${exportData.metadata.generatedAt}`);
-      lines.push(`# Data Source: ${exportData.metadata.dataSource}`);
       lines.push('');
-      
+
+      // Crypto data section
+      if (exportData.cryptoData && exportData.cryptoData.length > 0) {
+        lines.push('# Cryptocurrency Price Data');
+        lines.push('date,coinId,price,volume,marketCap,priceChangePercentage24h');
+        exportData.cryptoData.forEach((item: any) => {
+          lines.push(`${item.date},${item.coinId},${item.price},${item.volume},${item.marketCap},${item.priceChangePercentage24h}`);
+        });
+        lines.push('');
+      }
+
       // GitHub data section
       if (exportData.githubData && exportData.githubData.length > 0) {
         lines.push('# GitHub Activity Data');
-        lines.push('date,city,commits,stars,repositories,contributors');
+        lines.push('date,commits,stars,contributors');
         exportData.githubData.forEach((item: any) => {
-          lines.push(`${item.date},${item.city},${item.commits},${item.stars},${item.repositories},${item.contributors}`);
+          lines.push(`${item.date},${item.commits},${item.stars},${item.contributors}`);
         });
         lines.push('');
       }
-      
-      // Air quality data section
-      if (exportData.airQualityData && exportData.airQualityData.length > 0) {
-        lines.push('# Air Quality Data');
-        lines.push('date,city,aqi,pm25,station,lat,lng');
-        exportData.airQualityData.forEach((item: any) => {
-          lines.push(`${item.date},${item.city},${item.aqi},${item.pm25},${item.station},${item.coordinates.lat},${item.coordinates.lng}`);
-        });
-        lines.push('');
-      }
-      
+
       // Correlation data section
       if (exportData.correlationData) {
         lines.push('# Correlation Analysis');
         lines.push('metric,correlation_value');
-        lines.push(`commits_aqi,${exportData.correlationData.correlations.commits_aqi}`);
-        lines.push(`stars_aqi,${exportData.correlationData.correlations.stars_aqi}`);
-        lines.push(`commits_pm25,${exportData.correlationData.correlations.commits_pm25}`);
-        lines.push(`stars_pm25,${exportData.correlationData.correlations.stars_pm25}`);
+        lines.push(`commits_price,${exportData.correlationData.correlations.commits_price}`);
+        lines.push(`commits_volume,${exportData.correlationData.correlations.commits_volume}`);
+        lines.push(`pullRequests_price,${exportData.correlationData.correlations.pullRequests_price}`);
+        lines.push(`stars_price,${exportData.correlationData.correlations.stars_price}`);
         lines.push(`confidence,${exportData.correlationData.confidence}`);
         lines.push(`data_points,${exportData.correlationData.dataPoints}`);
       }
-      
+
       res.send(lines.join('\n'));
     }
-    
+
   } catch (error) {
     console.error('Export endpoint error:', error);
     res.status(500).json({

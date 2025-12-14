@@ -1,7 +1,7 @@
 {
-  "name": "github-air-quality-dashboard",
+  "name": "devcrypto-analytics-dashboard",
   "version": "1.0.0",
-  "description": "A data mashup application exploring correlations between developer productivity and air quality",
+  "description": "A data analytics dashboard exploring correlations between GitHub developer activity and cryptocurrency price movements",
   "private": true,
   "workspaces": [
     "frontend",

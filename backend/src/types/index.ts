@@ -1,19 +1,20 @@
 /**
  * Core data models and types for DevCrypto Analytics Dashboard
- * These interfaces define the structure of data used throughout the application
+ * GitHub Activity vs Cryptocurrency Prices
  */
 
-// Core data interfaces
+// GitHub Activity Data for crypto repositories
 export interface GitHubActivity {
   date: string;
   commits: number;
   stars: number;
   contributors: number;
-  pullRequests?: number; // Optional for backward compatibility
-  city?: string; // Optional for backward compatibility
-  repositories?: number; // Optional for backward compatibility
+  pullRequests?: number;
+  issues?: number;
+  forks?: number;
 }
 
+// Cryptocurrency Price Data
 export interface CryptoData {
   date: string;
   coinId: string;
@@ -23,31 +24,7 @@ export interface CryptoData {
   priceChangePercentage24h: number;
 }
 
-export interface AirQualityData {
-  date: string;
-  city: string;
-  aqi: number;
-  pm25: number;
-  station: string;
-  coordinates: {
-    lat: number;
-    lng: number;
-  };
-}
-
-export interface CorrelationResult {
-  city: string;
-  period: number;
-  correlations: {
-    commits_aqi: number;
-    stars_aqi: number;
-    commits_pm25: number;
-    stars_pm25: number;
-  };
-  confidence: number;
-  dataPoints: number;
-}
-
+// Correlation Result (GitHub Activity vs Crypto Prices)
 export interface CryptoCorrelationResult {
   coinId: string;
   period: number;
@@ -62,67 +39,13 @@ export interface CryptoCorrelationResult {
   interpretation: string;
 }
 
-export interface TechHubCity {
+// Supported Cryptocurrency
+export interface CryptoCoin {
   id: string;
+  symbol: string;
   name: string;
-  country: string;
-  coordinates: {
-    lat: number;
-    lng: number;
-  };
-  timezone: string;
-  githubSearchQuery: string;
-}
-
-// API Response types
-export interface GitHubAPIResponse {
-  total_count: number;
-  incomplete_results: boolean;
-  items: Array<{
-    id: number;
-    name: string;
-    full_name: string;
-    stargazers_count: number;
-    created_at: string;
-    updated_at: string;
-    pushed_at: string;
-    language: string;
-    owner: {
-      login: string;
-      type: string;
-    };
-  }>;
-}
-
-export interface WAQIAPIResponse {
-  status: string;
-  data: {
-    aqi: number;
-    idx: number;
-    attributions: Array<{
-      url: string;
-      name: string;
-    }>;
-    city: {
-      geo: [number, number];
-      name: string;
-      url: string;
-    };
-    dominentpol: string;
-    iaqi: {
-      pm25?: { v: number };
-      pm10?: { v: number };
-      o3?: { v: number };
-      no2?: { v: number };
-      so2?: { v: number };
-      co?: { v: number };
-    };
-    time: {
-      s: string;
-      tz: string;
-      v: number;
-    };
-  };
+  color: string;
+  githubRepo: string;
 }
 
 // CoinGecko API Response types
@@ -143,6 +66,26 @@ export interface CoinGeckoHistoricalData {
   total_volumes: [number, number][]; // [timestamp, volume]
 }
 
+// GitHub API Response types
+export interface GitHubAPIResponse {
+  total_count: number;
+  incomplete_results: boolean;
+  items: Array<{
+    id: number;
+    name: string;
+    full_name: string;
+    stargazers_count: number;
+    created_at: string;
+    updated_at: string;
+    pushed_at: string;
+    language: string;
+    owner: {
+      login: string;
+      type: string;
+    };
+  }>;
+}
+
 // GitHub Events API Response
 export interface GitHubEventResponse {
   id: string;
@@ -160,32 +103,18 @@ export interface GitHubEventResponse {
   };
 }
 
-// Utility types for internal data structures
-export interface DataStore {
-  githubCache: Map<string, GitHubActivity[]>;
-  airQualityCache: Map<string, AirQualityData[]>;
-  correlationCache: Map<string, CorrelationResult>;
-  lastUpdated: Map<string, Date>;
-}
-
-export interface APIError {
-  code: number;
-  message: string;
-  source: 'github' | 'waqi' | 'coingecko' | 'internal';
-  timestamp: string;
-}
-
+// Export data interface
 export interface ExportData {
   metadata: {
-    city: string;
+    coinId: string;
     period: number;
     exportFormat: 'json' | 'csv';
     generatedAt: string;
     dataSource: 'live' | 'mock';
   };
   githubData: GitHubActivity[];
-  airQualityData: AirQualityData[];
-  correlationData?: CorrelationResult;
+  cryptoData: CryptoData[];
+  correlationData?: CryptoCorrelationResult;
 }
 
 // Validation result types
@@ -193,6 +122,14 @@ export interface ValidationResult<T> {
   isValid: boolean;
   data?: T;
   errors: string[];
+}
+
+// API Error
+export interface APIError {
+  code: number;
+  message: string;
+  source: 'github' | 'coingecko' | 'internal';
+  timestamp: string;
 }
 
 // Time period type

@@ -1,6 +1,6 @@
 import {
   GitHubActivity,
-  AirQualityData,
+  CryptoData,
   CorrelationResult,
   TimePeriod,
   ExportFormat
@@ -36,20 +36,12 @@ export function validateGitHubActivity(data: any): ValidationResult<GitHubActivi
     errors.push('Date must be a valid ISO 8601 date string');
   }
 
-  if (typeof data.city !== 'string' || data.city.trim().length === 0) {
-    errors.push('City must be a non-empty string');
-  }
-
   if (!Number.isInteger(data.commits) || data.commits < 0) {
     errors.push('Commits must be a non-negative integer');
   }
 
   if (!Number.isInteger(data.stars) || data.stars < 0) {
     errors.push('Stars must be a non-negative integer');
-  }
-
-  if (!Number.isInteger(data.repositories) || data.repositories < 0) {
-    errors.push('Repositories must be a non-negative integer');
   }
 
   if (!Number.isInteger(data.contributors) || data.contributors < 0) {
@@ -64,9 +56,9 @@ export function validateGitHubActivity(data: any): ValidationResult<GitHubActivi
 }
 
 /**
- * Validates AirQualityData data structure and values
+ * Validates CryptoData data structure and values
  */
-export function validateAirQualityData(data: any): ValidationResult<AirQualityData> {
+export function validateCryptoData(data: any): ValidationResult<CryptoData> {
   const errors: string[] = [];
 
   if (!data || typeof data !== 'object') {
@@ -78,37 +70,25 @@ export function validateAirQualityData(data: any): ValidationResult<AirQualityDa
     errors.push('Date must be a valid ISO 8601 date string');
   }
 
-  if (typeof data.city !== 'string' || data.city.trim().length === 0) {
-    errors.push('City must be a non-empty string');
+  if (typeof data.coin !== 'string' || data.coin.trim().length === 0) {
+    errors.push('Coin must be a non-empty string');
   }
 
-  if (typeof data.aqi !== 'number' || data.aqi < 0 || data.aqi > 500) {
-    errors.push('AQI must be a number between 0 and 500');
+  if (typeof data.price !== 'number' || data.price < 0) {
+    errors.push('Price must be a non-negative number');
   }
 
-  if (typeof data.pm25 !== 'number' || data.pm25 < 0 || data.pm25 > 1000) {
-    errors.push('PM2.5 must be a number between 0 and 1000');
+  if (typeof data.volume !== 'number' || data.volume < 0) {
+    errors.push('Volume must be a non-negative number');
   }
 
-  if (typeof data.station !== 'string' || data.station.trim().length === 0) {
-    errors.push('Station must be a non-empty string');
-  }
-
-  // Validate coordinates
-  if (!data.coordinates || typeof data.coordinates !== 'object') {
-    errors.push('Coordinates must be an object');
-  } else {
-    if (typeof data.coordinates.lat !== 'number' || data.coordinates.lat < -90 || data.coordinates.lat > 90) {
-      errors.push('Latitude must be a number between -90 and 90');
-    }
-    if (typeof data.coordinates.lng !== 'number' || data.coordinates.lng < -180 || data.coordinates.lng > 180) {
-      errors.push('Longitude must be a number between -180 and 180');
-    }
+  if (typeof data.marketCap !== 'number' || data.marketCap < 0) {
+    errors.push('MarketCap must be a non-negative number');
   }
 
   return {
     isValid: errors.length === 0,
-    data: errors.length === 0 ? data as AirQualityData : undefined,
+    data: errors.length === 0 ? data as CryptoData : undefined,
     errors
   };
 }
@@ -123,8 +103,8 @@ export function validateCorrelationResult(data: any): ValidationResult<Correlati
     return { isValid: false, errors: ['Data must be an object'] };
   }
 
-  if (typeof data.city !== 'string' || data.city.trim().length === 0) {
-    errors.push('City must be a non-empty string');
+  if (typeof data.coin !== 'string' || data.coin.trim().length === 0) {
+    errors.push('Coin must be a non-empty string');
   }
 
   if (!Number.isInteger(data.period) || data.period <= 0) {
@@ -143,7 +123,7 @@ export function validateCorrelationResult(data: any): ValidationResult<Correlati
   if (!data.correlations || typeof data.correlations !== 'object') {
     errors.push('Correlations must be an object');
   } else {
-    const correlationKeys = ['commits_aqi', 'stars_aqi', 'commits_pm25', 'stars_pm25'];
+    const correlationKeys = ['commits_price', 'commits_volume', 'pullRequests_price', 'stars_price'];
     for (const key of correlationKeys) {
       const value = data.correlations[key];
       if (typeof value !== 'number' || value < -1 || value > 1) {
@@ -216,14 +196,14 @@ export function validateExportFormat(format: string): ValidationResult<ExportFor
  */
 function isValidDateString(dateString: string): boolean {
   const date = new Date(dateString);
-  return !isNaN(date.getTime()) && dateString === date.toISOString();
+  return !isNaN(date.getTime());
 }
 
 /**
  * Validates an array of data items using a validator function
  */
 export function validateArray<T>(
-  data: any[], 
+  data: any[],
   validator: (item: any) => ValidationResult<T>
 ): ValidationResult<T[]> {
   const errors: string[] = [];

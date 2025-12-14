@@ -3,17 +3,18 @@
  */
 
 export {
-  useCities,
-  useGitHubData,
-  useAirQualityData,
-  useCorrelationData,
-  useAllData
+  useCoins,
+  useCryptoData,
+  useCryptoCorrelationData,
+  useCryptoGitHubData,
+  useMockGitHubData,
+  useCryptoDashboardData
 } from './useDataFetching';
 
 export {
-  useEnhancedCities,
-  useEnhancedGitHubData,
-  useEnhancedAirQualityData,
-  useEnhancedCorrelationData,
-  useEnhancedAllData
+  useEnhancedCoins,
+  useEnhancedCryptoData,
+  useEnhancedCryptoGitHubData,
+  useEnhancedCryptoCorrelationData,
+  useEnhancedCryptoDashboardData
 } from './useEnhancedDataFetching';

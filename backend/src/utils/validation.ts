@@ -1,15 +1,19 @@
-import { 
-  GitHubActivity, 
-  AirQualityData, 
-  CorrelationResult, 
-  TechHubCity, 
+import {
+  GitHubActivity,
+  CryptoData,
+  CryptoCorrelationResult,
+  CryptoCoin,
   ValidationResult,
   TimePeriod,
   ExportFormat,
-  GitHubAPIResponse,
-  WAQIAPIResponse
+  GitHubAPIResponse
 } from '../types';
-import { isSupportedCity } from '../data/cities';
+
+// Supported cryptocurrencies
+const SUPPORTED_COINS = [
+  'bitcoin', 'ethereum', 'solana', 'cardano',
+  'dogecoin', 'ripple', 'polkadot', 'avalanche-2'
+];
 
 /**
  * Validates GitHubActivity data structure and values
@@ -26,20 +30,12 @@ export function validateGitHubActivity(data: any): ValidationResult<GitHubActivi
     errors.push('Date must be a valid ISO 8601 date string');
   }
 
-  if (typeof data.city !== 'string' || data.city.trim().length === 0) {
-    errors.push('City must be a non-empty string');
-  }
-
   if (!Number.isInteger(data.commits) || data.commits < 0) {
     errors.push('Commits must be a non-negative integer');
   }
 
   if (!Number.isInteger(data.stars) || data.stars < 0) {
     errors.push('Stars must be a non-negative integer');
-  }
-
-  if (!Number.isInteger(data.repositories) || data.repositories < 0) {
-    errors.push('Repositories must be a non-negative integer');
   }
 
   if (!Number.isInteger(data.contributors) || data.contributors < 0) {
@@ -54,9 +50,9 @@ export function validateGitHubActivity(data: any): ValidationResult<GitHubActivi
 }
 
 /**
- * Validates AirQualityData data structure and values
+ * Validates CryptoData data structure and values
  */
-export function validateAirQualityData(data: any): ValidationResult<AirQualityData> {
+export function validateCryptoData(data: any): ValidationResult<CryptoData> {
   const errors: string[] = [];
 
   if (!data || typeof data !== 'object') {
@@ -68,53 +64,45 @@ export function validateAirQualityData(data: any): ValidationResult<AirQualityDa
     errors.push('Date must be a valid ISO 8601 date string');
   }
 
-  if (typeof data.city !== 'string' || data.city.trim().length === 0) {
-    errors.push('City must be a non-empty string');
+  if (typeof data.coinId !== 'string' || data.coinId.trim().length === 0) {
+    errors.push('CoinId must be a non-empty string');
   }
 
-  if (typeof data.aqi !== 'number' || data.aqi < 0 || data.aqi > 500) {
-    errors.push('AQI must be a number between 0 and 500');
+  if (typeof data.price !== 'number' || data.price < 0) {
+    errors.push('Price must be a non-negative number');
   }
 
-  if (typeof data.pm25 !== 'number' || data.pm25 < 0 || data.pm25 > 1000) {
-    errors.push('PM2.5 must be a number between 0 and 1000');
+  if (typeof data.volume !== 'number' || data.volume < 0) {
+    errors.push('Volume must be a non-negative number');
   }
 
-  if (typeof data.station !== 'string' || data.station.trim().length === 0) {
-    errors.push('Station must be a non-empty string');
+  if (typeof data.marketCap !== 'number' || data.marketCap < 0) {
+    errors.push('MarketCap must be a non-negative number');
   }
 
-  // Validate coordinates
-  if (!data.coordinates || typeof data.coordinates !== 'object') {
-    errors.push('Coordinates must be an object');
-  } else {
-    if (typeof data.coordinates.lat !== 'number' || data.coordinates.lat < -90 || data.coordinates.lat > 90) {
-      errors.push('Latitude must be a number between -90 and 90');
-    }
-    if (typeof data.coordinates.lng !== 'number' || data.coordinates.lng < -180 || data.coordinates.lng > 180) {
-      errors.push('Longitude must be a number between -180 and 180');
-    }
+  if (typeof data.priceChangePercentage24h !== 'number') {
+    errors.push('PriceChangePercentage24h must be a number');
   }
 
   return {
     isValid: errors.length === 0,
-    data: errors.length === 0 ? data as AirQualityData : undefined,
+    data: errors.length === 0 ? data as CryptoData : undefined,
     errors
   };
 }
 
 /**
- * Validates CorrelationResult data structure and values
+ * Validates CryptoCorrelationResult data structure and values
  */
-export function validateCorrelationResult(data: any): ValidationResult<CorrelationResult> {
+export function validateCryptoCorrelationResult(data: any): ValidationResult<CryptoCorrelationResult> {
   const errors: string[] = [];
 
   if (!data || typeof data !== 'object') {
     return { isValid: false, errors: ['Data must be an object'] };
   }
 
-  if (typeof data.city !== 'string' || data.city.trim().length === 0) {
-    errors.push('City must be a non-empty string');
+  if (typeof data.coinId !== 'string' || data.coinId.trim().length === 0) {
+    errors.push('CoinId must be a non-empty string');
   }
 
   if (!Number.isInteger(data.period) || data.period <= 0) {
@@ -133,7 +121,7 @@ export function validateCorrelationResult(data: any): ValidationResult<Correlati
   if (!data.correlations || typeof data.correlations !== 'object') {
     errors.push('Correlations must be an object');
   } else {
-    const correlationKeys = ['commits_aqi', 'stars_aqi', 'commits_pm25', 'stars_pm25'];
+    const correlationKeys = ['commits_price', 'commits_volume', 'pullRequests_price', 'stars_price'];
     for (const key of correlationKeys) {
       const value = data.correlations[key];
       if (typeof value !== 'number' || value < -1 || value > 1) {
@@ -142,17 +130,21 @@ export function validateCorrelationResult(data: any): ValidationResult<Correlati
     }
   }
 
+  if (typeof data.interpretation !== 'string') {
+    errors.push('Interpretation must be a string');
+  }
+
   return {
     isValid: errors.length === 0,
-    data: errors.length === 0 ? data as CorrelationResult : undefined,
+    data: errors.length === 0 ? data as CryptoCorrelationResult : undefined,
     errors
   };
 }
 
 /**
- * Validates TechHubCity data structure and values
+ * Validates CryptoCoin data structure
  */
-export function validateTechHubCity(data: any): ValidationResult<TechHubCity> {
+export function validateCryptoCoin(data: any): ValidationResult<CryptoCoin> {
   const errors: string[] = [];
 
   if (!data || typeof data !== 'object') {
@@ -163,37 +155,25 @@ export function validateTechHubCity(data: any): ValidationResult<TechHubCity> {
     errors.push('ID must be a non-empty string');
   }
 
+  if (typeof data.symbol !== 'string' || data.symbol.trim().length === 0) {
+    errors.push('Symbol must be a non-empty string');
+  }
+
   if (typeof data.name !== 'string' || data.name.trim().length === 0) {
     errors.push('Name must be a non-empty string');
   }
 
-  if (typeof data.country !== 'string' || data.country.trim().length === 0) {
-    errors.push('Country must be a non-empty string');
+  if (typeof data.color !== 'string' || data.color.trim().length === 0) {
+    errors.push('Color must be a non-empty string');
   }
 
-  if (typeof data.timezone !== 'string' || data.timezone.trim().length === 0) {
-    errors.push('Timezone must be a non-empty string');
-  }
-
-  if (typeof data.githubSearchQuery !== 'string' || data.githubSearchQuery.trim().length === 0) {
-    errors.push('GitHub search query must be a non-empty string');
-  }
-
-  // Validate coordinates
-  if (!data.coordinates || typeof data.coordinates !== 'object') {
-    errors.push('Coordinates must be an object');
-  } else {
-    if (typeof data.coordinates.lat !== 'number' || data.coordinates.lat < -90 || data.coordinates.lat > 90) {
-      errors.push('Latitude must be a number between -90 and 90');
-    }
-    if (typeof data.coordinates.lng !== 'number' || data.coordinates.lng < -180 || data.coordinates.lng > 180) {
-      errors.push('Longitude must be a number between -180 and 180');
-    }
+  if (typeof data.githubRepo !== 'string' || data.githubRepo.trim().length === 0) {
+    errors.push('GitHub repo must be a non-empty string');
   }
 
   return {
     isValid: errors.length === 0,
-    data: errors.length === 0 ? data as TechHubCity : undefined,
+    data: errors.length === 0 ? data as CryptoCoin : undefined,
     errors
   };
 }
@@ -228,56 +208,30 @@ export function validateGitHubAPIResponse(data: any): ValidationResult<GitHubAPI
 }
 
 /**
- * Validates WAQI API response structure
+ * Validates coin parameter
  */
-export function validateWAQIAPIResponse(data: any): ValidationResult<WAQIAPIResponse> {
+export function validateCoinParam(coinId: string): ValidationResult<string> {
   const errors: string[] = [];
 
-  if (!data || typeof data !== 'object') {
-    return { isValid: false, errors: ['Data must be an object'] };
-  }
-
-  if (typeof data.status !== 'string') {
-    errors.push('status must be a string');
-  }
-
-  if (!data.data || typeof data.data !== 'object') {
-    errors.push('data must be an object');
-  } else {
-    if (typeof data.data.aqi !== 'number') {
-      errors.push('data.aqi must be a number');
-    }
+  if (typeof coinId !== 'string' || coinId.trim().length === 0) {
+    errors.push('Coin ID parameter must be a non-empty string');
+  } else if (!SUPPORTED_COINS.includes(coinId)) {
+    errors.push(`Coin '${coinId}' is not supported. Supported coins: ${SUPPORTED_COINS.join(', ')}`);
   }
 
   return {
     isValid: errors.length === 0,
-    data: errors.length === 0 ? data as WAQIAPIResponse : undefined,
+    data: errors.length === 0 ? coinId : undefined,
     errors
   };
 }
 
 /**
- * Validates request parameters
+ * Validates time period parameter
  */
-export function validateCityParam(city: string): ValidationResult<string> {
+export function validateTimePeriod(days: string | number): ValidationResult<TimePeriod> {
   const errors: string[] = [];
-
-  if (typeof city !== 'string' || city.trim().length === 0) {
-    errors.push('City parameter must be a non-empty string');
-  } else if (!isSupportedCity(city)) {
-    errors.push(`City '${city}' is not supported`);
-  }
-
-  return {
-    isValid: errors.length === 0,
-    data: errors.length === 0 ? city : undefined,
-    errors
-  };
-}
-
-export function validateTimePeriod(days: string): ValidationResult<TimePeriod> {
-  const errors: string[] = [];
-  const numDays = parseInt(days, 10);
+  const numDays = typeof days === 'string' ? parseInt(days, 10) : days;
 
   if (isNaN(numDays)) {
     errors.push('Days parameter must be a valid number');
@@ -292,6 +246,9 @@ export function validateTimePeriod(days: string): ValidationResult<TimePeriod> {
   };
 }
 
+/**
+ * Validates export format parameter
+ */
 export function validateExportFormat(format: string): ValidationResult<ExportFormat> {
   const errors: string[] = [];
 
@@ -313,14 +270,14 @@ export function validateExportFormat(format: string): ValidationResult<ExportFor
  */
 function isValidDateString(dateString: string): boolean {
   const date = new Date(dateString);
-  return !isNaN(date.getTime()) && dateString === date.toISOString();
+  return !isNaN(date.getTime());
 }
 
 /**
  * Validates an array of data items using a validator function
  */
 export function validateArray<T>(
-  data: any[], 
+  data: any[],
   validator: (item: any) => ValidationResult<T>
 ): ValidationResult<T[]> {
   const errors: string[] = [];

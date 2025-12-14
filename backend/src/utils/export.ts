@@ -1,32 +1,32 @@
-import { ExportData, GitHubActivity, AirQualityData, CorrelationResult, ExportFormat } from '../types';
+import { ExportData, GitHubActivity, CryptoData, CryptoCorrelationResult, ExportFormat } from '../types';
 
 /**
  * Export utilities for serializing dashboard data to different formats
- * These functions handle exporting data with proper metadata and formatting
+ * These functions handle exporting crypto data with proper metadata and formatting
  */
 
 /**
  * Create export data structure with metadata
  */
 export function createExportData(
-  city: string,
+  coinId: string,
   period: number,
   format: ExportFormat,
   githubData: GitHubActivity[],
-  airQualityData: AirQualityData[],
-  correlationData?: CorrelationResult,
+  cryptoData: CryptoData[],
+  correlationData?: CryptoCorrelationResult,
   dataSource: 'live' | 'mock' = 'live'
 ): ExportData {
   return {
     metadata: {
-      city,
+      coinId,
       period,
       exportFormat: format,
       generatedAt: new Date().toISOString(),
       dataSource
     },
     githubData,
-    airQualityData,
+    cryptoData,
     correlationData
   };
 }
@@ -50,47 +50,47 @@ export function parseExportDataFromJSON(json: string): ExportData {
  */
 export function serializeExportDataToCSV(data: ExportData): string {
   const lines: string[] = [];
-  
+
   // Add metadata header
-  lines.push('# Export Metadata');
-  lines.push(`# City: ${data.metadata.city}`);
+  lines.push('# DevCrypto Export');
+  lines.push(`# Coin: ${data.metadata.coinId}`);
   lines.push(`# Period: ${data.metadata.period} days`);
   lines.push(`# Generated: ${data.metadata.generatedAt}`);
   lines.push(`# Data Source: ${data.metadata.dataSource}`);
   lines.push('');
-  
+
+  // Crypto data section
+  if (data.cryptoData && data.cryptoData.length > 0) {
+    lines.push('# Cryptocurrency Price Data');
+    lines.push('date,coinId,price,volume,marketCap,priceChangePercentage24h');
+    data.cryptoData.forEach(item => {
+      lines.push(`${item.date},${item.coinId},${item.price},${item.volume},${item.marketCap},${item.priceChangePercentage24h}`);
+    });
+    lines.push('');
+  }
+
   // GitHub data section
-  if (data.githubData.length > 0) {
+  if (data.githubData && data.githubData.length > 0) {
     lines.push('# GitHub Activity Data');
-    lines.push('date,city,commits,stars,repositories,contributors');
+    lines.push('date,commits,stars,contributors');
     data.githubData.forEach(item => {
-      lines.push(`${item.date},${item.city},${item.commits},${item.stars},${item.repositories},${item.contributors}`);
+      lines.push(`${item.date},${item.commits},${item.stars},${item.contributors}`);
     });
     lines.push('');
   }
-  
-  // Air quality data section
-  if (data.airQualityData.length > 0) {
-    lines.push('# Air Quality Data');
-    lines.push('date,city,aqi,pm25,station,lat,lng');
-    data.airQualityData.forEach(item => {
-      lines.push(`${item.date},${item.city},${item.aqi},${item.pm25},${item.station},${item.coordinates.lat},${item.coordinates.lng}`);
-    });
-    lines.push('');
-  }
-  
+
   // Correlation data section
   if (data.correlationData) {
     lines.push('# Correlation Analysis');
     lines.push('metric,correlation_value');
-    lines.push(`commits_aqi,${data.correlationData.correlations.commits_aqi}`);
-    lines.push(`stars_aqi,${data.correlationData.correlations.stars_aqi}`);
-    lines.push(`commits_pm25,${data.correlationData.correlations.commits_pm25}`);
-    lines.push(`stars_pm25,${data.correlationData.correlations.stars_pm25}`);
+    lines.push(`commits_price,${data.correlationData.correlations.commits_price}`);
+    lines.push(`commits_volume,${data.correlationData.correlations.commits_volume}`);
+    lines.push(`pullRequests_price,${data.correlationData.correlations.pullRequests_price}`);
+    lines.push(`stars_price,${data.correlationData.correlations.stars_price}`);
     lines.push(`confidence,${data.correlationData.confidence}`);
     lines.push(`data_points,${data.correlationData.dataPoints}`);
   }
-  
+
   return lines.join('\n');
 }
 
@@ -101,11 +101,11 @@ export function serializeExportDataToCSV(data: ExportData): string {
 export function parseExportDataFromCSV(csv: string): Partial<ExportData> {
   const lines = csv.split('\n');
   const metadata: any = {};
-  
+
   // Extract metadata from comments
   lines.forEach(line => {
-    if (line.startsWith('# City: ')) {
-      metadata.city = line.substring(8);
+    if (line.startsWith('# Coin: ')) {
+      metadata.coinId = line.substring(8);
     } else if (line.startsWith('# Period: ')) {
       const match = line.match(/# Period: (\d+) days/);
       if (match) {
@@ -117,14 +117,14 @@ export function parseExportDataFromCSV(csv: string): Partial<ExportData> {
       metadata.dataSource = line.substring(15) as 'live' | 'mock';
     }
   });
-  
+
   return {
     metadata: {
       ...metadata,
       exportFormat: 'csv' as ExportFormat
     },
-    githubData: [], // Would need full CSV parsing implementation
-    airQualityData: [], // Would need full CSV parsing implementation
+    githubData: [],
+    cryptoData: [],
     correlationData: undefined
   };
 }
@@ -133,7 +133,7 @@ export function parseExportDataFromCSV(csv: string): Partial<ExportData> {
  * Generate export filename based on parameters
  */
 export function generateExportFilename(
-  city: string,
+  coinId: string,
   period: number,
   format: ExportFormat,
   timestamp?: string
@@ -145,9 +145,6 @@ export function generateExportFilename(
   } else {
     ts = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
   }
-  
-  // Sanitize city name by removing invalid filename characters
-  const sanitizedCity = city.replace(/[/\\:*?"<>|]/g, '-').trim();
-  
-  return `github-air-quality-${sanitizedCity}-${period}days-${ts}.${format}`;
+
+  return `devcrypto-${coinId}-${period}days-${ts}.${format}`;
 }

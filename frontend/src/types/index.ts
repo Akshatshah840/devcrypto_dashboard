@@ -3,7 +3,7 @@
  * GitHub Activity vs Cryptocurrency Prices
  */
 
-// GitHub Activity Data
+// GitHub Activity Data for crypto repositories
 export interface GitHubActivity {
   date: string;
   commits: number;
@@ -30,7 +30,7 @@ export interface CryptoCoin {
   id: string;
   symbol: string;
   name: string;
-  icon: string;
+  color: string;
 }
 
 // Correlation Result (GitHub vs Crypto)
@@ -48,31 +48,6 @@ export interface CorrelationResult {
   dataPoints: number;
 }
 
-// Legacy types for compatibility
-export interface AirQualityData {
-  date: string;
-  city: string;
-  aqi: number;
-  pm25: number;
-  station: string;
-  coordinates: {
-    lat: number;
-    lng: number;
-  };
-}
-
-export interface TechHubCity {
-  id: string;
-  name: string;
-  country: string;
-  coordinates: {
-    lat: number;
-    lng: number;
-  };
-  timezone: string;
-  githubSearchQuery: string;
-}
-
 // Frontend-specific types
 export interface UIState {
   selectedCoin: string;
@@ -87,7 +62,6 @@ export interface LoadingState {
   crypto: boolean;
   correlation: boolean;
   export: boolean;
-  airQuality?: boolean; // Legacy support
 }
 
 export interface ErrorState {
@@ -95,7 +69,6 @@ export interface ErrorState {
   crypto: string | null;
   correlation: string | null;
   export: string | null;
-  airQuality?: string | null; // Legacy support
 }
 
 export interface ChartData {
@@ -125,7 +98,7 @@ export interface ExportData {
   metadata: {
     coin: string;
     period: number;
-    exportFormat: 'json' | 'csv';
+    exportFormat: 'csv' | 'pdf';
     generatedAt: string;
     dataSource: 'live' | 'mock';
   };
@@ -136,10 +109,10 @@ export interface ExportData {
 
 // Utility types
 export type TimePeriod = 7 | 14 | 30 | 60 | 90;
-export type ExportFormat = 'json' | 'csv';
+export type ExportFormat = 'csv' | 'pdf';
 export type DataSource = 'live' | 'mock';
 export type TabType = 'dashboard' | 'github' | 'crypto' | 'comparison' | 'reports';
-export type CoinType = 'bitcoin' | 'ethereum' | 'solana' | 'cardano' | 'dogecoin';
+export type CoinType = 'bitcoin' | 'ethereum' | 'solana' | 'cardano' | 'dogecoin' | 'ripple' | 'polkadot' | 'avalanche-2';
 
 // API response wrapper
 export interface APIResponse<T> {

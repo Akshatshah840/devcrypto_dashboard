@@ -2,10 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import {
   GitHubActivity,
-  AirQualityData,
   CryptoData,
   CorrelationResult,
-  TechHubCity,
   TimePeriod,
   APIResponse,
   LoadingState,
@@ -45,8 +43,8 @@ const CACHE_DURATION = 5 * 60 * 1000;
 const dataCache: DataCache = {};
 
 // Helper function to generate cache key
-const getCacheKey = (endpoint: string, city: string, period: TimePeriod): string => {
-  return `${endpoint}-${city}-${period}`;
+const getCacheKey = (endpoint: string, identifier: string, period: TimePeriod): string => {
+  return `${endpoint}-${identifier}-${period}`;
 };
 
 // Helper function to check if cached data is still valid
@@ -54,19 +52,19 @@ const isCacheValid = (timestamp: number): boolean => {
   return Date.now() - timestamp < CACHE_DURATION;
 };
 
-// Custom hook for fetching cities
-export const useCities = () => {
-  const [cities, setCities] = useState<TechHubCity[]>([]);
+// Custom hook for fetching supported coins
+export const useCoins = () => {
+  const [coins, setCoins] = useState<string[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchCities = async () => {
-      const cacheKey = 'cities-all';
-      
+    const fetchCoins = async () => {
+      const cacheKey = 'coins-all';
+
       // Check cache first
       if (dataCache[cacheKey] && isCacheValid(dataCache[cacheKey].timestamp)) {
-        setCities(dataCache[cacheKey].data);
+        setCoins(dataCache[cacheKey].data);
         setLoading(false);
         return;
       }
@@ -74,13 +72,13 @@ export const useCities = () => {
       try {
         setLoading(true);
         setError(null);
-        
-        const response = await apiClient.get<APIResponse<TechHubCity[]>>('/cities');
-        
+
+        const response = await apiClient.get<APIResponse<string[]>>('/crypto/coins');
+
         if (response.data.success && response.data.data) {
           const fetchedData = response.data.data;
-          setCities(fetchedData);
-          
+          setCoins(fetchedData);
+
           // Cache the data
           dataCache[cacheKey] = {
             data: fetchedData,
@@ -88,192 +86,21 @@ export const useCities = () => {
             source: 'live'
           };
         } else {
-          throw new Error(response.data.error || 'Failed to fetch cities');
+          throw new Error(response.data.error || 'Failed to fetch coins');
         }
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Failed to fetch cities';
+        const errorMessage = err instanceof Error ? err.message : 'Failed to fetch coins';
         setError(errorMessage);
-        console.error('Error fetching cities:', err);
+        console.error('Error fetching coins:', err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchCities();
+    fetchCoins();
   }, []);
 
-  return { cities, loading, error };
-};
-
-// Custom hook for fetching GitHub data
-export const useGitHubData = (city: string, period: TimePeriod) => {
-  const [data, setData] = useState<GitHubActivity[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-  const [source, setSource] = useState<DataSource>('live');
-
-  const fetchData = useCallback(async () => {
-    if (!city) return;
-
-    const cacheKey = getCacheKey('github', city, period);
-    
-    // Check cache first
-    if (dataCache[cacheKey] && isCacheValid(dataCache[cacheKey].timestamp)) {
-      setData(dataCache[cacheKey].data);
-      setSource(dataCache[cacheKey].source);
-      return;
-    }
-
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const response = await apiClient.get<APIResponse<GitHubActivity[]>>(`/github/${city}/${period}`);
-      
-      if (response.data.success && response.data.data) {
-        const fetchedData = response.data.data;
-        const dataSource = response.data.source;
-        
-        setData(fetchedData);
-        setSource(dataSource);
-        
-        // Cache the data
-        dataCache[cacheKey] = {
-          data: fetchedData,
-          timestamp: Date.now(),
-          source: dataSource
-        };
-      } else {
-        throw new Error(response.data.error || 'Failed to fetch GitHub data');
-      }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch GitHub data';
-      setError(errorMessage);
-      console.error('Error fetching GitHub data:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [city, period]);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
-  return { data, loading, error, source, refetch: fetchData };
-};
-
-// Custom hook for fetching air quality data
-export const useAirQualityData = (city: string, period: TimePeriod) => {
-  const [data, setData] = useState<AirQualityData[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-  const [source, setSource] = useState<DataSource>('live');
-
-  const fetchData = useCallback(async () => {
-    if (!city) return;
-
-    const cacheKey = getCacheKey('airquality', city, period);
-    
-    // Check cache first
-    if (dataCache[cacheKey] && isCacheValid(dataCache[cacheKey].timestamp)) {
-      setData(dataCache[cacheKey].data);
-      setSource(dataCache[cacheKey].source);
-      return;
-    }
-
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const response = await apiClient.get<APIResponse<AirQualityData[]>>(`/airquality/${city}/${period}`);
-      
-      if (response.data.success && response.data.data) {
-        const fetchedData = response.data.data;
-        const dataSource = response.data.source;
-        
-        setData(fetchedData);
-        setSource(dataSource);
-        
-        // Cache the data
-        dataCache[cacheKey] = {
-          data: fetchedData,
-          timestamp: Date.now(),
-          source: dataSource
-        };
-      } else {
-        throw new Error(response.data.error || 'Failed to fetch air quality data');
-      }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch air quality data';
-      setError(errorMessage);
-      console.error('Error fetching air quality data:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [city, period]);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
-  return { data, loading, error, source, refetch: fetchData };
-};
-
-// Custom hook for fetching correlation data
-export const useCorrelationData = (city: string, period: TimePeriod) => {
-  const [data, setData] = useState<CorrelationResult | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-  const [source, setSource] = useState<DataSource>('live');
-
-  const fetchData = useCallback(async () => {
-    if (!city) return;
-
-    const cacheKey = getCacheKey('correlation', city, period);
-
-    // Check cache first
-    if (dataCache[cacheKey] && isCacheValid(dataCache[cacheKey].timestamp)) {
-      setData(dataCache[cacheKey].data);
-      setSource(dataCache[cacheKey].source);
-      return;
-    }
-
-    try {
-      setLoading(true);
-      setError(null);
-
-      const response = await apiClient.get<APIResponse<CorrelationResult>>(`/correlation/${city}/${period}`);
-
-      if (response.data.success && response.data.data) {
-        const fetchedData = response.data.data;
-        const dataSource = response.data.source;
-
-        setData(fetchedData);
-        setSource(dataSource);
-
-        // Cache the data
-        dataCache[cacheKey] = {
-          data: fetchedData,
-          timestamp: Date.now(),
-          source: dataSource
-        };
-      } else {
-        throw new Error(response.data.error || 'Failed to fetch correlation data');
-      }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch correlation data';
-      setError(errorMessage);
-      console.error('Error fetching correlation data:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [city, period]);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
-  return { data, loading, error, source, refetch: fetchData };
+  return { coins, loading, error };
 };
 
 // Custom hook for fetching crypto data from real API
@@ -466,7 +293,7 @@ export const useCryptoGitHubData = (coinId: string, period: TimePeriod) => {
   return { data, loading, error, source, refetch: fetchData };
 };
 
-// Hook for GitHub data using mock data (kept for compatibility)
+// Hook for GitHub data using mock data
 export const useMockGitHubData = (period: TimePeriod) => {
   const [data, setData] = useState<GitHubActivity[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -513,62 +340,9 @@ export const useMockGitHubData = (period: TimePeriod) => {
   return { data, loading, error, source, refetch: fetchData };
 };
 
-// Combined hook for all data types (legacy - kept for compatibility)
-export const useAllData = (city: string, period: TimePeriod) => {
-  const githubData = useGitHubData(city, period);
-  const airQualityData = useAirQualityData(city, period);
-  const correlationData = useCorrelationData(city, period);
-
-  const loading: LoadingState = {
-    github: githubData.loading,
-    crypto: false,
-    correlation: correlationData.loading,
-    export: false,
-    airQuality: airQualityData.loading
-  };
-
-  const error: ErrorState = {
-    github: githubData.error,
-    crypto: null,
-    correlation: correlationData.error,
-    export: null,
-    airQuality: airQualityData.error
-  };
-
-  const refetchAll = useCallback(() => {
-    githubData.refetch();
-    airQualityData.refetch();
-    correlationData.refetch();
-  }, [githubData.refetch, airQualityData.refetch, correlationData.refetch]);
-
-  return {
-    github: {
-      data: githubData.data,
-      loading: githubData.loading,
-      error: githubData.error,
-      source: githubData.source
-    },
-    airQuality: {
-      data: airQualityData.data,
-      loading: airQualityData.loading,
-      error: airQualityData.error,
-      source: airQualityData.source
-    },
-    correlation: {
-      data: correlationData.data,
-      loading: correlationData.loading,
-      error: correlationData.error,
-      source: correlationData.source
-    },
-    loading,
-    error,
-    refetchAll
-  };
-};
-
-// New combined hook for crypto dashboard
+// Combined hook for crypto dashboard
 export const useCryptoDashboardData = (coinId: string, period: TimePeriod) => {
-  const githubData = useMockGitHubData(period);
+  const githubData = useCryptoGitHubData(coinId, period);
   const cryptoData = useCryptoData(coinId, period);
   const correlationData = useCryptoCorrelationData(coinId, period);
 

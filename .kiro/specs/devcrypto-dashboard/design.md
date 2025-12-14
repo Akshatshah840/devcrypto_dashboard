@@ -116,11 +116,14 @@ interface CorrelationResult {
   coinId: string;
   period: number;
   correlations: {
-    price_commits: number;
-    price_stars: number;
-    volume_activity: number;
+    commits_price: number;
+    commits_volume: number;
+    pullRequests_price: number;
+    stars_price: number;
   };
   confidence: number;
+  dataPoints: number;
+  interpretation: string;
 }
 ```
 

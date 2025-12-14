@@ -1,4 +1,4 @@
-import { GitHubActivity, AirQualityData, CorrelationResult, GitHubAPIResponse, WAQIAPIResponse } from '../types';
+import { GitHubActivity, CryptoData, CryptoCorrelationResult, GitHubAPIResponse } from '../types';
 
 /**
  * Serialization utilities for API responses and data models
@@ -8,40 +8,20 @@ import { GitHubActivity, AirQualityData, CorrelationResult, GitHubAPIResponse, W
 /**
  * Parse GitHub API response to internal GitHubActivity format
  */
-export function parseGitHubAPIResponse(response: GitHubAPIResponse, city: string, date: string): GitHubActivity {
+export function parseGitHubAPIResponse(response: GitHubAPIResponse, date: string): GitHubActivity {
   const commits = response.items.reduce((sum, item) => {
     // Estimate commits based on recent activity (simplified for demo)
     return sum + (item.stargazers_count > 0 ? Math.floor(Math.random() * 10) + 1 : 0);
   }, 0);
 
   const stars = response.items.reduce((sum, item) => sum + item.stargazers_count, 0);
-  const repositories = response.items.length;
   const contributors = response.items.length; // Simplified - each repo has at least one contributor
 
   return {
     date,
-    city,
     commits,
     stars,
-    repositories,
     contributors
-  };
-}
-
-/**
- * Parse WAQI API response to internal AirQualityData format
- */
-export function parseWAQIAPIResponse(response: WAQIAPIResponse, city: string): AirQualityData {
-  return {
-    date: new Date(response.data.time.v * 1000).toISOString(),
-    city,
-    aqi: response.data.aqi,
-    pm25: response.data.iaqi.pm25?.v || 0,
-    station: response.data.city.name,
-    coordinates: {
-      lat: response.data.city.geo[0],
-      lng: response.data.city.geo[1]
-    }
   };
 }
 
@@ -60,30 +40,30 @@ export function parseGitHubActivity(json: string): GitHubActivity {
 }
 
 /**
- * Serialize AirQualityData to JSON string
+ * Serialize CryptoData to JSON string
  */
-export function serializeAirQualityData(data: AirQualityData): string {
+export function serializeCryptoData(data: CryptoData): string {
   return JSON.stringify(data);
 }
 
 /**
- * Parse JSON string to AirQualityData
+ * Parse JSON string to CryptoData
  */
-export function parseAirQualityData(json: string): AirQualityData {
+export function parseCryptoData(json: string): CryptoData {
   return JSON.parse(json);
 }
 
 /**
- * Serialize CorrelationResult to JSON string
+ * Serialize CryptoCorrelationResult to JSON string
  */
-export function serializeCorrelationResult(data: CorrelationResult): string {
+export function serializeCorrelationResult(data: CryptoCorrelationResult): string {
   return JSON.stringify(data);
 }
 
 /**
- * Parse JSON string to CorrelationResult
+ * Parse JSON string to CryptoCorrelationResult
  */
-export function parseCorrelationResult(json: string): CorrelationResult {
+export function parseCorrelationResult(json: string): CryptoCorrelationResult {
   return JSON.parse(json);
 }
 
