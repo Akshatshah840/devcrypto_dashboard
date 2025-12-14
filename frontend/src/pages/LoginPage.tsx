@@ -152,20 +152,6 @@ const LoginPage: React.FC = () => {
           </form>
 
           {/* Divider */}
-          <div className="divider my-6 text-base-content/40 text-sm">OR</div>
-
-          {/* Demo Login */}
-          <button
-            type="button"
-            className="btn btn-outline btn-secondary w-full"
-            onClick={() => {
-              setEmail('demo@example.com');
-              setPassword('Demo@123');
-            }}
-          >
-            Use Demo Account
-          </button>
-
           {/* Sign Up Link */}
           <p className="text-center mt-6 text-base-content/60">
             Don't have an account?{' '}
